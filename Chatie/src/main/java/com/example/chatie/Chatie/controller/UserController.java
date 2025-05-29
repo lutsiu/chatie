@@ -3,7 +3,7 @@ package com.example.chatie.Chatie.controller;
 import com.example.chatie.Chatie.dto.user.UserDTO;
 import com.example.chatie.Chatie.dto.user.UserRegisterDTO;
 import com.example.chatie.Chatie.dto.user.UserUpdateDTO;
-import com.example.chatie.Chatie.exception.user.UserNotFoundException;
+import com.example.chatie.Chatie.exception.global.NotFoundException;
 import com.example.chatie.Chatie.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,14 +41,14 @@ public class UserController {
     public ResponseEntity<UserDTO> findByEmail(@RequestParam String email) {
         return userService.findByEmail(email)
                 .map(ResponseEntity::ok)
-                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
     }
 
     @GetMapping("/by-username")
     public ResponseEntity<UserDTO> findByUsername(@RequestParam String username) {
         return userService.findByUsername(username)
                 .map(ResponseEntity::ok)
-                .orElseThrow(() -> new UserNotFoundException("User not found with username: " + username));
+                .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
     }
 
     // update

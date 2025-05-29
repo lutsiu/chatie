@@ -1,7 +1,7 @@
 package com.example.chatie.Chatie.exception;
+import com.example.chatie.Chatie.exception.global.NotFoundException;
 import com.example.chatie.Chatie.exception.user.DuplicateEmailException;
 import com.example.chatie.Chatie.exception.user.DuplicateUsernameException;
-import com.example.chatie.Chatie.exception.user.UserNotFoundException;
 import org.springframework.cglib.core.Local;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +18,8 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(NotFoundException ex) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
     @ExceptionHandler(DuplicateEmailException.class)

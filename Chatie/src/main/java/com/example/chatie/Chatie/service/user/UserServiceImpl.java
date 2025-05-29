@@ -6,7 +6,7 @@ import com.example.chatie.Chatie.dto.user.UserUpdateDTO;
 import com.example.chatie.Chatie.entity.User;
 import com.example.chatie.Chatie.exception.user.DuplicateEmailException;
 import com.example.chatie.Chatie.exception.user.DuplicateUsernameException;
-import com.example.chatie.Chatie.exception.user.UserNotFoundException;
+import com.example.chatie.Chatie.exception.global.NotFoundException;
 import com.example.chatie.Chatie.mapper.UserMapper;
 import com.example.chatie.Chatie.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +52,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + id));
+                .orElseThrow(() -> new NotFoundException("User not found with ID: " + id));
         return UserMapper.toDTO(user); // convert to dto
     }
 
@@ -82,7 +82,7 @@ public class UserServiceImpl implements UserService {
     public UserDTO updateUser(Long userId, UserUpdateDTO updatedUserDTO) {
         // find user
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
+                .orElseThrow(() -> new NotFoundException("User not found with ID: " + userId));
 
         // check if new email / username are taken by another user
         if (
@@ -120,7 +120,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException("User not found with ID: " + id);
+            throw new NotFoundException("User not found with ID: " + id);
         }
         userRepository.deleteById(id);
     }
