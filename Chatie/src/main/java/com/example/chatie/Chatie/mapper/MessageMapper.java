@@ -1,6 +1,6 @@
 package com.example.chatie.Chatie.mapper;
 
-import com.example.chatie.Chatie.dto.message.CreatedMessageDTO;
+import com.example.chatie.Chatie.dto.message.CreateMessageDTO;
 import com.example.chatie.Chatie.dto.message.MessageDTO;
 import com.example.chatie.Chatie.entity.Chat;
 import com.example.chatie.Chatie.entity.Message;
@@ -9,7 +9,7 @@ import com.example.chatie.Chatie.entity.User;
 public class MessageMapper {
 
     // Create DTO to entity
-    public static Message toEntity(CreatedMessageDTO dto, User sender, Chat chat) {
+    public static Message toEntity(CreateMessageDTO dto, User sender, Chat chat) {
         return Message.builder()
                 .content(dto.getContent())
                 .chat(chat)

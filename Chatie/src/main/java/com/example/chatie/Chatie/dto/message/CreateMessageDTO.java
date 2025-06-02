@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreatedMessageDTO {
+public class CreateMessageDTO {
 
     @NotNull(message = "Chat ID is required")
     private Long chatId;
