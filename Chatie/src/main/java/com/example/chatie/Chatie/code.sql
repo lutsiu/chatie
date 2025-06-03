@@ -16,6 +16,8 @@ CREATE TABLE chat (
   is_group BOOLEAN NOT NULL,
   created_by BIGINT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  image_url varchar(255),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
   FOREIGN KEY (created_by) REFERENCES user(id)
 );
 
@@ -28,3 +30,20 @@ CREATE TABLE message (
   FOREIGN KEY (chat_id) REFERENCES chat(id),
   FOREIGN KEY (sender_id) REFERENCES user(id)
 );
+
+CREATE TABLE chat_participant (
+    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+
+    chat_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+
+    role ENUM('ADMIN', 'MEMBER') NOT NULL DEFAULT 'MEMBER',
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_muted BOOLEAN DEFAULT FALSE,
+
+    CONSTRAINT fk_chat FOREIGN KEY (chat_id) REFERENCES chat(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+
+    UNIQUE KEY uq_chat_user (chat_id, user_id)
+);
+
