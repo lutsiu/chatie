@@ -14,5 +14,5 @@ public class UpdateChatParticipantDTO {
 
     private Role role;
 
-    private boolean isMuted;
+    private Boolean isMuted;
 }

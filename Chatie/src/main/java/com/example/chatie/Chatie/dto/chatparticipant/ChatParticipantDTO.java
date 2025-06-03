@@ -1,5 +1,6 @@
 package com.example.chatie.Chatie.dto.chatparticipant;
 
+import com.example.chatie.Chatie.util.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,5 +18,6 @@ public class ChatParticipantDTO {
     private Long userId;
     private String username;
     private LocalDateTime joinedAt;
+    private Role role;
     private boolean isMuted;
 }
