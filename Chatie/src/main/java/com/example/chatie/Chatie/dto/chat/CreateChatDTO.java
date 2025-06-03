@@ -13,4 +13,5 @@ public class CreateChatDTO {
     private String title;
     private boolean isGroup;
     private Long createdById;
+    private String imageUrl;
 }

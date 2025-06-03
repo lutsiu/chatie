@@ -13,4 +13,5 @@ import lombok.NoArgsConstructor;
 public class ChatUpdateDTO {
     @Size(min = 3, message = "Chat title should be at least 3 characters long")
     private String title;
+    private String imageUrl;
 }

@@ -16,6 +16,6 @@ public class ChatDTO {
     private boolean isGroup;
     private Long createdById;
     private String createdByUsername;
-
+    private String imageUrl;
 
 }
