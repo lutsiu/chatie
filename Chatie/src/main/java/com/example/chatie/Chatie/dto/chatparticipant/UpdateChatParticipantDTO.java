@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UpdateChatParticipantDTO {
 
+    private Long id;
     private Role role;
 
     private Boolean isMuted;
