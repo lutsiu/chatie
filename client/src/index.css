@@ -1,0 +1,32 @@
+/* Talwind custom properties */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  font-size: 62.5%; /* 1rem = 10px */
+}
+
+body {
+  font-family: 'Manrope', sans-serif;
+}
+
+@theme {
+
+  /* Manrope font weights */
+  --font-manrope-regular: 'Manrope', sans-serif;
+  --font-manrope-medium: 'Manrope', sans-serif;
+  --font-manrope-semibold: 'Manrope', sans-serif;
+  --font-manrope-bold: 'Manrope', sans-serif;
+
+  
+  /* Breakpoints */
+
+  --breakpoint-xs: 390px;     
+  --breakpoint-car-mobile: 440px;
+  --breakpoint-sm: 576px;     
+  --breakpoint-md: 768px;   
+  --breakpoint-lg: 1024px; 
+  --breakpoint-xl: 1280px; 
+  --breakpoint-2xl: 1440px;   
+  --breakpoint-3xl: 1536px;   
+}
