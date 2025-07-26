@@ -1,7 +1,7 @@
 import { useState } from "react";
 import SidebarHeader from "./SidebarHeader";
-import ChatList from "./ChatList";
-import SearchList from "./SearchList";
+import ChatList from "./ChatList/ChatList";
+import SearchList from "./Search/SearchList";
 
 export default function Sidebar() {
   const [query, setQuery] = useState("");

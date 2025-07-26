@@ -1,5 +1,5 @@
-import Hamburger from "./Hamburger";
-import SearchBar from "./SearchBar";
+import Hamburger from "./Hamburger/Hamburger";
+import SearchBar from "./Search/SearchBar";
 
 type Props = {
   query: string;
