@@ -1,9 +1,16 @@
 import { useState } from "react";
 import SidebarHeader from "./SidebarHeader";
+import ChatList from "./ChatList";
+import SearchList from "./SearchList";
 
 export default function Sidebar() {
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+
+  const clearSearch = () => {
+    setQuery("");
+    setIsSearching(false);
+  };
 
   return (
     <aside className="w-[28rem] bg-zinc-900 h-full border-r border-zinc-800 flex flex-col">
@@ -12,14 +19,14 @@ export default function Sidebar() {
         setQuery={setQuery}
         isSearching={isSearching}
         setIsSearching={setIsSearching}
+        clearSearch={clearSearch}
       />
 
-      {/* Example placeholder: replace with search results or chat list */}
       <div className="p-4 text-white text-sm">
         {isSearching ? (
-          <p>Searching for: <strong>{query}</strong></p>
+          <SearchList/>
         ) : (
-          <p>Showing chat list</p>
+          <ChatList/>
         )}
       </div>
     </aside>
