@@ -1,0 +1,19 @@
+/* styles/daypicker.css */
+
+/* Use the v9 path; if it fails in your setup, switch to 'react-day-picker/dist/style.css' */
+@import 'react-day-picker/style.css';
+
+.rdp-month_caption {
+  margin-bottom: 2rem;
+}
+.rdp-chevron {
+  fill: rgb(168 85 247);
+}
+
+.rdp-today, .rdp-selected {
+  color:rgb(168 85 247);
+}
+
+.rdp-root {
+  --rdp-accent-color: rgb(168 85 247);
+}

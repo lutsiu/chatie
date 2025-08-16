@@ -1,6 +1,7 @@
 import { Icon } from '@iconify/react';
 import SearchBar from '../Search/SearchBar';
 import { useState } from 'react';
+import ContactListItem from './ContactListItem';
 
 const mockContacts = [
   { id: 1, name: 'Contact1', username: 'contact1', avatar: 'https://www.cdc.gov/healthy-pets/media/images/2024/04/Cat-on-couch.jpg', lastSeen: 'online' },
@@ -42,20 +43,12 @@ export default function ContactsPanel({ onClose }: Props) {
             contact.name.toLowerCase().includes(query.toLowerCase())
           )
           .map(contact => (
-            <li
+            <ContactListItem 
               key={contact.id}
-              className="flex gap-[1.2rem] items-center px-[1.5rem] py-[1.1rem] hover:bg-zinc-800 cursor-pointer rounded-[1rem]"
-            >
-              <img
-                src={contact.avatar}
-                alt={contact.name}
-                className="w-[4.5rem] h-[4.5rem] rounded-full object-cover"
-              />
-              <div className="flex flex-col border-b border-zinc-800 pb-[0.4rem]">
-                <span className="text-white font-medium text-[1.5rem]">{contact.name}</span>
-                <span className="text-zinc-400 text-[1.3rem] truncate max-w-[16rem]">{contact.lastSeen}</span>
-              </div>
-            </li>
+              name={contact.name}
+              avatar={contact.avatar}
+              lastSeen={contact.lastSeen}
+            />
           ))}
       </ul>
     </div>
