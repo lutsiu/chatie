@@ -1,5 +1,4 @@
 import ChatHeaderMenu from "../ChatHeaderMenu";          
-import ChatSearchPanel from "../ChatSearchPanel";         
 import ChatDatePickerModal from "../ChatDatePickerModal"; 
 
 import { AvatarButton } from "./components/AvatarButton";
@@ -8,6 +7,7 @@ import { SearchField } from "./components/SearchField";
 import { HeaderActions } from "./components/HeaderActions";
 import { useChatHeader } from "./hooks/useChatHeader";
 import type { Props } from "./types";
+import ChatSearchPanel from "../ChatSearchPanel";
 
 export default function ChatHeader({ onOpenProfile }: Props) {
   const {

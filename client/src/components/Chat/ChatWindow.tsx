@@ -1,9 +1,10 @@
 import { useState } from "react";
-import ChatHeader from "./ChatHeader";
+
 import MessageList from "./MessageList";
 import Composer from "./Composer";
 import UserInfoPanel from "./UserInfoPanel";
 import PinnedBanner from "./PinnedBanner";
+import ChatHeader from "./ChatHeader";
 
 const mockUser = {
   name: "ТВІЙ ЛІКАР В ПОЗНАНІ",
