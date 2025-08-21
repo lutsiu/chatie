@@ -15,6 +15,7 @@ public class UserMapper {
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .profilePictureUrl(user.getProfilePictureUrl())
+                .about(user.getAbout())
                 .build();
     }
 
@@ -22,7 +23,7 @@ public class UserMapper {
         return User.builder()
                 .email(dto.getEmail())
                 .username(dto.getUsername())
-                .password(dto.getPassword()) // Raw password, encode in service
+                .password(dto.getPassword()) // encode in service
                 .firstName(dto.getFirstName())
                 .lastName(dto.getLastName())
                 .build();
@@ -34,6 +35,7 @@ public class UserMapper {
         if (dto.getFirstName() != null) user.setFirstName(dto.getFirstName());
         if (dto.getLastName() != null) user.setLastName(dto.getLastName());
         if (dto.getProfilePictureUrl() != null) user.setProfilePictureUrl(dto.getProfilePictureUrl());
-        if (dto.getPassword() != null) user.setPassword(dto.getPassword()); // Encode in service
+        if (dto.getAbout() != null) user.setAbout(dto.getAbout());
+        if (dto.getPassword() != null) user.setPassword(dto.getPassword()); // encode in service
     }
 }

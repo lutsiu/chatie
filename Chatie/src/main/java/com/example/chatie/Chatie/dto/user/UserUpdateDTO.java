@@ -26,4 +26,7 @@ public class UserUpdateDTO {
     private String password;
 
     private String profilePictureUrl;
+    @Size(max = 140, message = "About must be up to 140 characters")
+    private String about;
 }
+

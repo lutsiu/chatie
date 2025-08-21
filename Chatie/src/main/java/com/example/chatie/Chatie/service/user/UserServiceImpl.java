@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,99 +22,86 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
 
     @Override
     @Transactional
-    // add exception
-    public UserDTO createUser(UserRegisterDTO userRegisterDTO) {
-        // check if email is already exists
-        if (userRepository.existsByEmail(userRegisterDTO.getEmail())) {
-            throw new DuplicateEmailException(
-                    "Email is already in use " + userRegisterDTO.getEmail());
+    public UserDTO createUser(UserRegisterDTO dto) {
+        final String email = dto.getEmail().trim().toLowerCase();
+        final String username = dto.getUsername().trim();
+
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new DuplicateEmailException("Email is already in use " + email);
         }
-        // check if username is already exists
-        if (userRepository.existsByUsername(userRegisterDTO.getUsername())) {
-            throw new DuplicateUsernameException(
-                    "Username already in use: " + userRegisterDTO.getUsername());
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
+            throw new DuplicateUsernameException("Username already in use: " + username);
         }
-        // convert registration dto to entity
-        User user = UserMapper.toEntity(userRegisterDTO);
-        // encode password
+
+        User user = UserMapper.toEntity(dto);
+        user.setEmail(email);
+        user.setUsername(username);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        // save user to database
-        User savedUser = userRepository.save(user);
-        // return clean dto without password and redundant data
-        return UserMapper.toDTO(savedUser);
+        user.setPasswordUpdatedAt(LocalDateTime.now());
+
+        User saved = userRepository.save(user);
+        return UserMapper.toDTO(saved);
     }
 
     @Override
     public UserDTO getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found with ID: " + id));
-        return UserMapper.toDTO(user); // convert to dto
+        return UserMapper.toDTO(user);
     }
 
     @Override
     public List<UserDTO> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        return users
-                .stream()// translate list to stream
-                .map(UserMapper::toDTO) // convert each user to dto
-                .toList(); // return list
+        return userRepository.findAll().stream().map(UserMapper::toDTO).toList();
     }
 
     @Override
     public Optional<UserDTO> findByEmail(String email) {
-        Optional<User> possibleUser = userRepository.findByEmail(email);
-        return possibleUser.map(UserMapper::toDTO); // convert to dto
+        return userRepository.findByEmailIgnoreCase(email.trim().toLowerCase()).map(UserMapper::toDTO);
     }
 
     @Override
     public Optional<UserDTO> findByUsername(String username) {
-        Optional<User> possibleUser = userRepository.findByUsername(username);
-        return possibleUser.map(UserMapper::toDTO); // convert to dto
+        return userRepository.findByUsernameIgnoreCase(username.trim()).map(UserMapper::toDTO);
     }
 
     @Override
     @Transactional
-    public UserDTO updateUser(Long userId, UserUpdateDTO updatedUserDTO) {
-        // find user
+    public UserDTO updateUser(Long userId, UserUpdateDTO dto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with ID: " + userId));
 
-        // check if new email / username are taken by another user
-        if (
-                updatedUserDTO.getEmail() != null && // check if updated dto has email
-                !updatedUserDTO.getEmail().equals(user.getEmail()) && // check if emails are not the same
-                userRepository.existsByEmail(updatedUserDTO.getEmail()) // email already in use
-        ) {
-            throw new DuplicateEmailException(
-                    "Email already in use: " + updatedUserDTO.getEmail());
+        if (dto.getEmail() != null) {
+            String newEmail = dto.getEmail().trim().toLowerCase();
+            if (!newEmail.equals(user.getEmail()) && userRepository.existsByEmailIgnoreCase(newEmail)) {
+                throw new DuplicateEmailException("Email already in use: " + newEmail);
+            }
+            user.setEmail(newEmail);
         }
 
-        if (
-                updatedUserDTO.getUsername() != null && // check if updated dto has email
-                !updatedUserDTO.getUsername().equals(user.getUsername()) && // check if emails are not the same
-                userRepository.existsByUsername(updatedUserDTO.getUsername()) // username already in use
-        ) {
-            throw new DuplicateUsernameException(
-                    "Username already in use: " + updatedUserDTO.getUsername());
+        if (dto.getUsername() != null) {
+            String newUsername = dto.getUsername().trim();
+            if (!newUsername.equals(user.getUsername()) && userRepository.existsByUsernameIgnoreCase(newUsername)) {
+                throw new DuplicateUsernameException("Username already in use: " + newUsername);
+            }
+            user.setUsername(newUsername);
         }
 
-        // update user
-        UserMapper.updateUserFromDTO(user, updatedUserDTO);
+        // Map simple fields (first/last, avatar, about)
+        UserMapper.updateUserFromDTO(user, dto);
 
-        // encode password
-        if (updatedUserDTO.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(updatedUserDTO.getPassword()));
+        if (dto.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+            user.setPasswordUpdatedAt(LocalDateTime.now());
         }
-        // save and return user as DTO
-        User savedUser = userRepository.save(user);
-        return UserMapper.toDTO(savedUser);
 
+        User saved = userRepository.save(user);
+        return UserMapper.toDTO(saved);
     }
 
     @Override
@@ -127,11 +115,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+        return userRepository.existsByEmailIgnoreCase(email.trim().toLowerCase());
     }
 
     @Override
     public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
+        return userRepository.existsByUsernameIgnoreCase(username.trim());
     }
 }
