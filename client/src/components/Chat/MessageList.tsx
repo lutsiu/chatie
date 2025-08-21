@@ -11,30 +11,19 @@ type Msg = {
   file?: { url: string; name: string; size: number; mime?: string };
 };
 
+// For mock data, just hardcode names.
+// Later you can lift this from chat state (peer name + current user name).
+const SELF = "You";
+const PEER = "Valery";
+
 const earlier: Msg[] = [
-  {
-    id: 1,
-    time: "09:41",
-    isOwn: false,
-    text: "Привіт! Як настрій?",
-  },
-  {
-    id: 2,
-    time: "09:42",
-    isOwn: true,
-    status: "delivered",
-    text: "Все гуд. Заливаю макети й оновлюю таски.",
-  },
+  { id: 1, time: "09:41", isOwn: false, text: "Привіт! Як настрій?" },
+  { id: 2, time: "09:42", isOwn: true, status: "delivered", text: "Все гуд. Заливаю макети й оновлюю таски." },
   {
     id: 3,
     time: "09:50",
     isOwn: false,
-    media: [
-      {
-        url: "https://images.unsplash.com/photo-1548142813-c348350df52b?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
-    ],
+    media: [{ url: "https://images.unsplash.com/photo-1548142813-c348350df52b?q=80&w=1200&auto=format&fit=crop", type: "image" }],
   },
   {
     id: 4,
@@ -57,14 +46,8 @@ const today: Msg[] = [
     isOwn: false,
     text: "Подивись ці скріни",
     media: [
-      {
-        url: "https://images.unsplash.com/photo-1517816743773-6e0fd518b4a6?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
-      {
-        url: "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
+      { url: "https://images.unsplash.com/photo-1517816743773-6e0fd518b4a6?q=80&w=1200&auto=format&fit=crop", type: "image" },
+      { url: "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?q=80&w=1200&auto=format&fit=crop", type: "image" },
     ],
   },
   {
@@ -74,18 +57,9 @@ const today: Msg[] = [
     status: "read",
     text: "Круто виглядає! Є ще варіанти?",
     media: [
-      {
-        url: "https://images.unsplash.com/photo-1520975922325-24e4b4a2e86a?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
-      {
-        url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
-      {
-        url: "https://images.unsplash.com/photo-1520975922325-24e4b4a2e86a?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
+      { url: "https://images.unsplash.com/photo-1520975922325-24e4b4a2e86a?q=80&w=1200&auto=format&fit=crop", type: "image" },
+      { url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop", type: "image" },
+      { url: "https://images.unsplash.com/photo-1520975922325-24e4b4a2e86a?q=80&w=1200&auto=format&fit=crop", type: "image" },
     ],
   },
   {
@@ -106,34 +80,17 @@ const today: Msg[] = [
     isOwn: true,
     status: "sent",
     media: [
-      {
-        url: "https://images.unsplash.com/photo-1495567720989-cebdbdd97913?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
-      {
-        url: "https://images.unsplash.com/photo-1482192505345-5655af888cc4?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
-      {
-        url: "https://images.unsplash.com/photo-1484249170766-998fa6efe3c0?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
-      {
-        url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1200&auto=format&fit=crop",
-        type: "image",
-      },
+      { url: "https://images.unsplash.com/photo-1495567720989-cebdbdd97913?q=80&w=1200&auto=format&fit=crop", type: "image" },
+      { url: "https://images.unsplash.com/photo-1482192505345-5655af888cc4?q=80&w=1200&auto=format&fit=crop", type: "image" },
+      { url: "https://images.unsplash.com/photo-1484249170766-998fa6efe3c0?q=80&w=1200&auto=format&fit=crop", type: "image" },
+      { url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1200&auto=format&fit=crop", type: "image" },
     ],
   },
   {
     id: 9,
     time: "10:31",
     isOwn: false,
-    media: [
-      {
-        url: "https://interactive-examples.mdn.mozilla.org/media/cc0-videos/flower.mp4",
-        type: "video",
-      },
-    ],
+    media: [{ url: "https://interactive-examples.mdn.mozilla.org/media/cc0-videos/flower.mp4", type: "video" }],
     text: "І невеличке відео для контексту",
   },
 ];
@@ -145,12 +102,14 @@ export default function MessageList() {
         {earlier.map((m) => (
           <MessageBubble
             key={m.id}
+            id={m.id}
+            author={m.isOwn ? SELF : PEER}
             text={m.text}
             time={m.time}
             isOwn={m.isOwn}
             status={m.status}
             media={m.media}
-            file={m.file ?? undefined}
+            file={m.file}
           />
         ))}
 
@@ -159,12 +118,14 @@ export default function MessageList() {
         {today.map((m) => (
           <MessageBubble
             key={m.id}
+            id={m.id}
+            author={m.isOwn ? SELF : PEER}
             text={m.text}
             time={m.time}
             isOwn={m.isOwn}
             status={m.status}
             media={m.media}
-            file={m.file ?? undefined}
+            file={m.file}
           />
         ))}
       </div>
