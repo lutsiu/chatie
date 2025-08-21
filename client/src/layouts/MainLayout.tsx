@@ -1,8 +1,8 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar/Sidebar";
 
-import MediaViewerOverlay from "../components/Viewer/MediaViewerOverlay";
 import SidePanel from "../components/Sidebar/SidePanel";
+import MediaViewerOverlay from "../components/Viewer/MediaViewerOverlay";
 
 export default function MainLayout() {
   return (

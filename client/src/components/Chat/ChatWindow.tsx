@@ -2,9 +2,9 @@ import { useState } from "react";
 
 import MessageList from "./MessageList";
 import Composer from "./Composer";
-import UserInfoPanel from "./UserInfoPanel";
 import PinnedBanner from "./PinnedBanner";
 import ChatHeader from "./ChatHeader";
+import UserInfoPanel from "./UserInfoPanel";
 
 const mockUser = {
   name: "ТВІЙ ЛІКАР В ПОЗНАНІ",

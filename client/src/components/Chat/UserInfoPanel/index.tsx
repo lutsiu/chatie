@@ -1,12 +1,15 @@
-// components/Chat/UserInfoPanel.tsx
 import { useState, useMemo } from "react";
 import { Icon } from "@iconify/react";
-import { useMediaViewer } from "../../store/useMediaViewer"; 
+import { useMediaViewer } from "../../../store/useMediaViewer";
+
+import Toggle from "./components/Toggle";
+import MediaGrid from "./components/MediaGrid";
+import FilesList from "./components/FilesList";
 
 type Media = { id: number; url: string };
 type FileItem = { id: number; name: string; size: string };
 
-type Props = {
+export type Props = {
   open: boolean;
   onClose: () => void;
   user: {
@@ -21,7 +24,7 @@ type Props = {
 
 export default function UserInfoPanel({ open, onClose, user }: Props) {
   const [tab, setTab] = useState<"media" | "files">("media");
-  const openViewer = useMediaViewer(s => s.open);
+  const openViewer = useMediaViewer((s) => s.open);
 
   const mediaItems = useMemo(
     () => user.media.map((m) => ({ id: m.id, url: m.url, type: "image" as const })),
@@ -43,10 +46,11 @@ export default function UserInfoPanel({ open, onClose, user }: Props) {
         className={`absolute right-0 top-0 h-full bg-zinc-900 border-l border-zinc-800
         w-[28rem] md:w-[30rem] lg:w-[25vw] min-w-[26rem] max-w-[38rem]
         transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+        aria-hidden={!open}
       >
         <div className="flex items-center justify-between px-[1.6rem] h-[5.6rem] border-b border-zinc-800">
           <div className="text-white text-[1.6rem] font-semibold">User Info</div>
-          <button onClick={onClose} className="p-[0.6rem] rounded-full hover:bg-zinc-800">
+          <button onClick={onClose} className="p-[0.6rem] rounded-full hover:bg-zinc-800" aria-label="Close">
             <Icon icon="ph:x-bold" className="w-[2rem] h-[2rem] text-zinc-300" />
           </button>
         </div>
@@ -101,54 +105,12 @@ export default function UserInfoPanel({ open, onClose, user }: Props) {
           </div>
 
           {tab === "media" ? (
-            <div className="mt-[1.6rem] grid grid-cols-3 gap-[0.6rem]">
-              {user.media.map((m, idx) => (
-                <img
-                  key={m.id}
-                  src={m.url}
-                  alt=""
-                  className="w-full h-[7rem] object-cover rounded-[0.6rem] cursor-zoom-in"
-                  onClick={() => handleOpenAt(idx)}
-                />
-              ))}
-            </div>
+            <MediaGrid items={user.media} onOpen={handleOpenAt} />
           ) : (
-            <ul className="mt-[1.6rem] space-y-[1rem]">
-              {user.files.map(f => (
-                <li
-                  key={f.id}
-                  className="flex items-center justify-between bg-zinc-800/50 rounded-[0.6rem] px-[1rem] py-[0.8rem]"
-                >
-                  <div className="flex items-center gap-[0.8rem]">
-                    <Icon icon="solar:document-linear" className="w-[2rem] h-[2rem] text-zinc-300" />
-                    <span className="text-white">{f.name}</span>
-                  </div>
-                  <span className="text-[1.2rem] text-zinc-400">{f.size}</span>
-                </li>
-              ))}
-            </ul>
+            <FilesList files={user.files} />
           )}
         </div>
       </aside>
     </div>
-  );
-}
-
-function Toggle() {
-  const [on, setOn] = useState(true);
-  return (
-    <button
-      onClick={() => setOn(v => !v)}
-      className={`w-[4.8rem] h-[2.6rem] rounded-full transition-colors ${
-        on ? "bg-purple-500/80" : "bg-zinc-700"
-      } relative`}
-      aria-pressed={on}
-    >
-      <span
-        className={`absolute top-[0.2rem] left-[0.2rem] h-[2.2rem] w-[2.2rem] bg-white rounded-full transition-transform ${
-          on ? "translate-x-[2.2rem]" : ""
-        }`}
-      />
-    </button>
   );
 }
