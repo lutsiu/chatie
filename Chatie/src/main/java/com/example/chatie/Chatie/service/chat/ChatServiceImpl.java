@@ -1,8 +1,6 @@
 package com.example.chatie.Chatie.service.chat;
 
 import com.example.chatie.Chatie.dto.chat.ChatDTO;
-import com.example.chatie.Chatie.dto.chat.ChatUpdateDTO;
-import com.example.chatie.Chatie.dto.chat.CreateChatDTO;
 import com.example.chatie.Chatie.entity.Chat;
 import com.example.chatie.Chatie.entity.User;
 import com.example.chatie.Chatie.exception.global.NotFoundException;
@@ -13,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,78 +22,48 @@ public class ChatServiceImpl implements ChatService {
     private final UserRepository userRepository;
 
     @Override
-    public ChatDTO getChatById(Long id) {
-        Chat chat = chatRepository.findById(id).orElseThrow(
-                () -> new NotFoundException(("Chat not found with ID: " + id)));
+    public ChatDTO getById(Long id) {
+        Chat chat = chatRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Chat not found with ID: " + id));
         return ChatMapper.toDTO(chat);
     }
 
     @Override
-    public List<ChatDTO> getAllChats() {
-        List<Chat> chats = chatRepository.findAll();
-        return convertChatListToDTOList(chats);
-    }
-
-    @Override
-    public Optional<ChatDTO> getChatByTitle(String title) {
-        Optional<Chat> possibleChat = chatRepository.findByTitle(title);
-        return possibleChat.map(ChatMapper::toDTO);
-    }
-
-    @Override
-    public List<ChatDTO> getChatsByCreatedById(Long id) {
-        List<Chat> chats = chatRepository.findByCreatedById(id);
-        return convertChatListToDTOList(chats);
-    }
-
-    @Override
-    public List<ChatDTO> getGroupChats() {
-        List<Chat> groupChats = chatRepository.findByGroupTrue();
-        return convertChatListToDTOList(groupChats);
-    }
-
-    @Override
-    public List<ChatDTO> getPrivateChats() {
-        List<Chat> groupChats = chatRepository.findByGroupFalse();
-        return convertChatListToDTOList(groupChats);
+    public List<ChatDTO> listForUser(Long userId) {
+        return chatRepository.findByUser1IdOrUser2Id(userId, userId)
+                .stream().map(ChatMapper::toDTO).toList();
     }
 
     @Override
     @Transactional
-    public ChatDTO createChat(CreateChatDTO dto) {
-        User user = userRepository.findById(dto.getCreatedById())
-                .orElseThrow(()
-                        -> new NotFoundException(
-                                "User not found with ID: " + dto.getCreatedById()));
-        Chat chat = ChatMapper.toEntity(dto, user);
-        Chat savedChat = chatRepository.save(chat);
-        return ChatMapper.toDTO(savedChat);
-    }
-
-    @Override
-    @Transactional
-    public ChatDTO updateChat(Long chatId, ChatUpdateDTO dto) {
-        Chat chat = chatRepository.findById(chatId)
-                .orElseThrow(() -> new NotFoundException("Chat not found with ID: " + chatId));
-
-        if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
-            chat.setTitle(dto.getTitle());
+    public ChatDTO getOrCreate(Long userAId, Long userBId) {
+        if (userAId.equals(userBId)) {
+            throw new IllegalArgumentException("A chat requires two distinct users");
         }
 
-        Chat updatedChat = chatRepository.save(chat);
-        return ChatMapper.toDTO(updatedChat);
+        // Normalize order: smaller ID -> user1
+        Long first = Math.min(userAId, userBId);
+        Long second = Math.max(userAId, userBId);
+
+        return chatRepository.findByUserPair(first, second)
+                .map(ChatMapper::toDTO)
+                .orElseGet(() -> {
+                    User u1 = userRepository.findById(first)
+                            .orElseThrow(() -> new NotFoundException("User not found: " + first));
+                    User u2 = userRepository.findById(second)
+                            .orElseThrow(() -> new NotFoundException("User not found: " + second));
+
+                    Chat saved = chatRepository.save(ChatMapper.toEntity(u1, u2));
+                    return ChatMapper.toDTO(saved);
+                });
     }
 
     @Override
     @Transactional
-    public void deleteChatById(Long chatId) {
+    public void deleteById(Long chatId) {
         if (!chatRepository.existsById(chatId)) {
-            throw new NotFoundException(("Chat not found with ID: " + chatId));
+            throw new NotFoundException("Chat not found with ID: " + chatId);
         }
         chatRepository.deleteById(chatId);
-    }
-
-    private List<ChatDTO> convertChatListToDTOList(List<Chat> chats) {
-        return chats.stream().map(ChatMapper::toDTO).toList();
     }
 }

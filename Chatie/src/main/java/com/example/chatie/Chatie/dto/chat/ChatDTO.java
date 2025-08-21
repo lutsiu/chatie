@@ -1,21 +1,19 @@
 package com.example.chatie.Chatie.dto.chat;
 
-import com.example.chatie.Chatie.entity.Chat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
+import java.time.LocalDateTime;
+
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class ChatDTO {
     private Long id;
-    private String title;
-    private boolean isGroup;
-    private Long createdById;
-    private String createdByUsername;
-    private String imageUrl;
 
+    private Long user1Id;
+    private String user1Username;
+
+    private Long user2Id;
+    private String user2Username;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
