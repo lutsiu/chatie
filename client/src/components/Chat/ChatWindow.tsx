@@ -3,6 +3,7 @@ import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import Composer from "./Composer";
 import UserInfoPanel from "./UserInfoPanel";
+import PinnedBanner from "./PinnedBanner";
 
 const mockUser = {
   name: "ТВІЙ ЛІКАР В ПОЗНАНІ",
@@ -27,6 +28,7 @@ export default function ChatWindow() {
   return (
     <section className="relative h-full w-full flex flex-col bg-zinc-950">
       <ChatHeader onOpenProfile={() => setProfileOpen(true)} />
+      <PinnedBanner/>
       <MessageList />
       <Composer />
       <UserInfoPanel
