@@ -3,15 +3,16 @@ import MainLayout from "./layouts/MainLayout";
 import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import Protected from "./components/Protected";
 
 function App() {
   return (
     <Routes>
-      {/* Public route */}
+      {/* Public */}
       <Route path="/auth" element={<AuthPage />} />
 
-      {/* Main app layout */}
-      <Route path="/" element={<MainLayout />}>
+      {/* Protected app */}
+      <Route path="/" element={<Protected><MainLayout /></Protected>}>
         <Route index element={<HomePage />} />
         <Route path=":chatId" element={<HomePage />} />
         <Route path="*" element={<NotFoundPage />} />
@@ -19,5 +20,4 @@ function App() {
     </Routes>
   );
 }
-
 export default App;
