@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @RequiredArgsConstructor
@@ -25,8 +26,13 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        // keep users open for now; lock down later
+
+                        // require JWT for avatar upload
+                        .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
+
+                        // keep the rest of user endpoints open for now
                         .requestMatchers("/api/users/**").permitAll()
+
                         .anyRequest().permitAll()
                 )
                 .httpBasic(Customizer.withDefaults());

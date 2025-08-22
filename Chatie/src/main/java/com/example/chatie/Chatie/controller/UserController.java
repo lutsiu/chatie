@@ -4,13 +4,19 @@ import com.example.chatie.Chatie.dto.user.UserDTO;
 import com.example.chatie.Chatie.dto.user.UserRegisterDTO;
 import com.example.chatie.Chatie.dto.user.UserUpdateDTO;
 import com.example.chatie.Chatie.exception.global.NotFoundException;
+import com.example.chatie.Chatie.service.media.AvatarServiceImpl;
 import com.example.chatie.Chatie.service.user.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.util.List;
 
 @RestController
@@ -19,6 +25,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final AvatarServiceImpl avatarService;
 
     // create
     @PostMapping
@@ -58,10 +65,25 @@ public class UserController {
             @Valid @RequestBody UserUpdateDTO body) {
         return ResponseEntity.ok(userService.updateUser(id, body));
     }
+
     // delete
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserDTO> uploadMyAvatar(
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication
+    ) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Long userId = Long.parseLong(authentication.getName()); // "6"
+        return ResponseEntity.ok(avatarService.uploadAvatar(userId, file));
+    }
+
 }
