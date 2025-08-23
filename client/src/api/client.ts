@@ -1,82 +1,60 @@
 import axios, { AxiosError, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { useAuthStore } from "../store/auth";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
+export const baseURL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 
 export const api: AxiosInstance = axios.create({
   baseURL,
   withCredentials: false,
 });
 
-// ---- Attach access token on each request
+// attach access token
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
     config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
+    (config.headers as any).Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// ---- Handle 401s with a refresh queue
+// 401 refresh queue
 let isRefreshing = false;
 let pending: Array<(token: string | null) => void> = [];
-
-function subscribeTokenRefresh(cb: (t: string | null) => void) {
-  pending.push(cb);
-}
-function onRefreshed(token: string | null) {
-  pending.forEach((cb) => cb(token));
-  pending = [];
-}
+const subscribe = (cb: (t: string | null) => void) => pending.push(cb);
+const publish = (t: string | null) => { pending.forEach((cb) => cb(t)); pending = []; };
 
 api.interceptors.response.use(
-  (res) => res,
+  (r) => r,
   async (error: AxiosError) => {
     const { refreshToken, refreshTokens, logout } = useAuthStore.getState();
 
-    // If no response or not 401, just bubble up
-    if (!error.response || error.response.status !== 401) {
-      return Promise.reject(error);
-    }
-
-    // If we have no refresh token, log out
-    if (!refreshToken) {
-      logout();
-      return Promise.reject(error);
-    }
+    if (!error.response || error.response.status !== 401) return Promise.reject(error);
+    if (!refreshToken) { logout(); return Promise.reject(error); }
 
     const original = error.config as AxiosRequestConfig & { _retry?: boolean };
-    if (original._retry) {
-      // We've already retried once; bail
-      logout();
-      return Promise.reject(error);
-    }
+    if (original._retry) { logout(); return Promise.reject(error); }
 
     if (!isRefreshing) {
       isRefreshing = true;
       try {
-        const newAccess = await refreshTokens();
+        const newAccess = await refreshTokens(); // string | null
         isRefreshing = false;
-        onRefreshed(newAccess);
+        publish(newAccess ?? null);
       } catch (e) {
         isRefreshing = false;
-        onRefreshed(null);
+        publish(null);
         logout();
         return Promise.reject(e);
       }
     }
 
-    // Queue up this request until refresh finishes
     return new Promise((resolve, reject) => {
-      subscribeTokenRefresh((newToken) => {
-        if (!newToken) {
-          reject(error);
-          return;
-        }
+      subscribe((newToken) => {
+        if (!newToken) return reject(error);
         original._retry = true;
         original.headers = original.headers ?? {};
-        original.headers.Authorization = `Bearer ${newToken}`;
+        (original.headers as any).Authorization = `Bearer ${newToken}`;
         resolve(api(original));
       });
     });

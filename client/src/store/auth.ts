@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { loginApi, refreshApi, registerApi, type AuthResponse, type LoginBody, type RegisterBody, type User } from "../api/auth";
+import { loginApi, refreshApi, type AuthResponse, type LoginBody } from "../api/auth";
+import { registerApi, type RegisterBody, type User } from "../api/users";
 
 type AuthState = {
   accessToken: string | null;
@@ -15,6 +16,7 @@ type AuthState = {
   logout: () => void;
   refreshTokens: () => Promise<string | null>;
   setAuth: (payload: AuthResponse) => void;
+  setUser: (u: User | null) => void; // <-- add this
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -29,11 +31,12 @@ export const useAuthStore = create<AuthState>()(
       setAuth: ({ accessToken, refreshToken, user }) =>
         set({ accessToken, refreshToken, user }),
 
+      setUser: (u) => set({ user: u }), // <-- implement
+
       register: async (body) => {
         set({ isLoading: true, error: null });
         try {
           const created = await registerApi(body);
-          // auto-login after register
           const auth = await loginApi({ identifier: created.username, password: body.password });
           set({ accessToken: auth.accessToken, refreshToken: auth.refreshToken, user: auth.user });
         } catch (e: any) {
@@ -71,8 +74,7 @@ export const useAuthStore = create<AuthState>()(
           set({ accessToken: refreshed.accessToken, refreshToken: refreshed.refreshToken, user: refreshed.user });
           return refreshed.accessToken;
         } catch {
-          // leave store as-is; interceptor will handle logout
-          return null;
+          return null; // client interceptor will handle logout on next 401
         }
       },
     }),
