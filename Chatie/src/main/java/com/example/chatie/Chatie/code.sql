@@ -69,3 +69,15 @@ CREATE TABLE chat_participant (
     UNIQUE KEY uq_chat_user (chat_id, user_id)
 );
 
+CREATE TABLE contact (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  owner_id BIGINT NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255),
+  created_at DATETIME,
+  updated_at DATETIME,
+  CONSTRAINT uk_contact_owner_email UNIQUE (owner_id, email),
+  CONSTRAINT fk_contact_owner FOREIGN KEY (owner_id) REFERENCES user (id)
+);
+

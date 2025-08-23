@@ -1,3 +1,4 @@
+// src/main/java/com/example/chatie/Chatie/controller/UserController.java
 package com.example.chatie.Chatie.controller;
 
 import com.example.chatie.Chatie.dto.user.UserDTO;
@@ -6,7 +7,6 @@ import com.example.chatie.Chatie.dto.user.UserUpdateDTO;
 import com.example.chatie.Chatie.exception.global.NotFoundException;
 import com.example.chatie.Chatie.service.media.AvatarServiceImpl;
 import com.example.chatie.Chatie.service.user.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.List;
 
 @RestController
@@ -27,13 +26,13 @@ public class UserController {
     private final UserService userService;
     private final AvatarServiceImpl avatarService;
 
-    // create
+    // === create ===
     @PostMapping
     public ResponseEntity<UserDTO> registerUser(@Valid @RequestBody UserRegisterDTO dto) {
         return ResponseEntity.ok(userService.createUser(dto));
     }
 
-    // get
+    // === read ===
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
@@ -58,20 +57,45 @@ public class UserController {
                 .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
     }
 
-    // update
+    // === update ===
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updateUser(
             @PathVariable Long id,
-            @Valid @RequestBody UserUpdateDTO body) {
+            @Valid @RequestBody UserUpdateDTO body
+    ) {
         return ResponseEntity.ok(userService.updateUser(id, body));
     }
 
-    // delete
+    // === delete ===
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    // === me: get current user ===
+    @GetMapping("/me")
+    public ResponseEntity<UserDTO> getMe(Authentication authentication) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(userService.getUserById(userId));
+    }
+
+    // === me: patch current user (all fields optional) ===
+    @PatchMapping("/me")
+    public ResponseEntity<UserDTO> updateMe(
+            @RequestBody UserUpdateDTO body,
+            Authentication authentication
+    ) {
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Long userId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(userService.updateUser(userId, body));
+    }
+
 
     @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UserDTO> uploadMyAvatar(
@@ -81,9 +105,7 @@ public class UserController {
         if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        Long userId = Long.parseLong(authentication.getName()); // "6"
+        Long userId = Long.parseLong(authentication.getName());
         return ResponseEntity.ok(avatarService.uploadAvatar(userId, file));
     }
-
 }
