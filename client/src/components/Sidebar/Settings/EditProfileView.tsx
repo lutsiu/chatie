@@ -1,13 +1,15 @@
+// src/components/SidePanel/views/EditProfileView.tsx
 import { Icon } from "@iconify/react";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../../store/auth";
 import { useAccountStore } from "../../../store/account";
+import { toast } from "sonner";
 
 type Props = { onBack: () => void };
 
 export default function EditProfileView({ onBack }: Props) {
   const user = useAuthStore((s) => s.user);
-  const { updateMe, uploadAvatar, isSaving, isUploading, error } = useAccountStore();
+  const { updateMe, uploadAvatar, isSaving, isUploading } = useAccountStore();
 
   const [firstName, setFirstName] = useState(user?.firstName ?? "");
   const [lastName, setLastName] = useState(user?.lastName ?? "");
@@ -32,12 +34,20 @@ export default function EditProfileView({ onBack }: Props) {
 
   const onPickAvatar = () => fileRef.current?.click();
 
+  const msg = (e: any) =>
+    e?.response?.data?.message || e?.message || "Something went wrong";
+
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
+
     setBusy(true);
     try {
-      await uploadAvatar(f);
+      await toast.promise(uploadAvatar(f), {
+        loading: "Uploading avatar…",
+        success: "Avatar updated",
+        error: (err) => msg(err),
+      });
     } finally {
       setBusy(false);
       e.target.value = "";
@@ -47,12 +57,20 @@ export default function EditProfileView({ onBack }: Props) {
   const onSave = async () => {
     setBusy(true);
     try {
-      await updateMe({
+      const p = updateMe({
         firstName: firstName.trim(),
         lastName: (lastName ?? "").trim() || null,
         about: (about ?? "").trim() || null,
         username: username.trim(),
       });
+
+      await toast.promise(p, {
+        loading: "Saving changes…",
+        success: "Profile updated",
+        error: (err) => msg(err), 
+      });
+
+      onBack();
     } finally {
       setBusy(false);
     }
@@ -86,17 +104,13 @@ export default function EditProfileView({ onBack }: Props) {
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
         </div>
-        {(busy || isUploading) && <p className="mt-[0.8rem] text-[1.2rem] text-zinc-400">Uploading…</p>}
+        {(busy || isUploading) && (
+          <p className="mt-[0.8rem] text-[1.2rem] text-zinc-400">Uploading…</p>
+        )}
       </div>
 
       {/* Form */}
       <div className="flex flex-col gap-[1.6rem] px-[1.6rem] pb-[2.4rem]">
-        {error && (
-          <div className="border border-red-500/30 bg-red-500/10 text-red-300 rounded-[0.8rem] px-[1.2rem] py-[1.0rem] text-[1.3rem]">
-            {error}
-          </div>
-        )}
-
         <div>
           <label className="block text-zinc-400 mb-[0.6rem] text-[1.3rem]">Name</label>
           <input
