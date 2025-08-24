@@ -1,5 +1,14 @@
+// src/store/contacts.ts
 import { create } from "zustand";
-import { listContactsApi, createContactApi, deleteContactApi, updateContactApi, type Contact, type CreateContactBody, type UpdateContactBody } from "../api/contacts";
+import {
+  listContactsApi,
+  createContactApi,
+  updateContactApi,
+  deleteContactApi,
+  type Contact,
+  type CreateContactBody,
+  type UpdateContactBody,
+} from "../api/contacts";
 
 type ContactsState = {
   items: Contact[];
@@ -9,11 +18,12 @@ type ContactsState = {
 
   fetch: (q?: string) => Promise<void>;
   add: (body: CreateContactBody) => Promise<Contact>;
-  update: (id: number, body: UpdateContactBody) => Promise<Contact>;
+  patch: (id: number, body: UpdateContactBody) => Promise<Contact>;
   remove: (id: number) => Promise<void>;
+  clear: () => void;
 };
 
-export const useContactsStore = create<ContactsState>()((set, get) => ({
+export const useContactsStore = create<ContactsState>((set, get) => ({
   items: [],
   loading: false,
   saving: false,
@@ -34,9 +44,9 @@ export const useContactsStore = create<ContactsState>()((set, get) => ({
   async add(body) {
     set({ saving: true, error: null });
     try {
-      const c = await createContactApi(body);
-      set({ items: [c, ...get().items] });
-      return c;
+      const created = await createContactApi(body);
+      set({ items: [created, ...get().items] });
+      return created;
     } catch (e: any) {
       set({ error: e?.response?.data?.message ?? "Failed to add contact" });
       throw e;
@@ -45,12 +55,12 @@ export const useContactsStore = create<ContactsState>()((set, get) => ({
     }
   },
 
-  async update(id, body) {
+  async patch(id, body) {
     set({ saving: true, error: null });
     try {
-      const c = await updateContactApi(id, body);
-      set({ items: get().items.map((x) => (x.id === id ? c : x)) });
-      return c;
+      const updated = await updateContactApi(id, body);
+      set({ items: get().items.map((c) => (c.id === id ? updated : c)) });
+      return updated;
     } catch (e: any) {
       set({ error: e?.response?.data?.message ?? "Failed to update contact" });
       throw e;
@@ -63,12 +73,16 @@ export const useContactsStore = create<ContactsState>()((set, get) => ({
     set({ saving: true, error: null });
     try {
       await deleteContactApi(id);
-      set({ items: get().items.filter((x) => x.id !== id) });
+      set({ items: get().items.filter((c) => c.id !== id) });
     } catch (e: any) {
-      set({ error: e?.response?.data?.message ?? "Failed to remove contact" });
+      set({ error: e?.response?.data?.message ?? "Failed to delete contact" });
       throw e;
     } finally {
       set({ saving: false });
     }
+  },
+
+  clear() {
+    set({ items: [], error: null, loading: false, saving: false });
   },
 }));

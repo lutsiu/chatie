@@ -1,20 +1,35 @@
-type Props = { name: string; email: string };
+// src/components/Sidebar/Contacts/ContactListItem.tsx
+type Props = {
+  name: string;
+  avatar: string | null | undefined;
+  subline: string; // email
+};
 
-export default function ContactListItem({ name, email }: Props) {
-  const initials = name
-    .split(" ")
-    .map((s) => s[0]?.toUpperCase() ?? "")
-    .slice(0, 2)
-    .join("");
+export default function ContactListItem({ name, avatar, subline }: Props) {
+  const fallback = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(
+    (name || subline || "User").trim()
+  )}&fontWeight=700`;
 
   return (
     <li className="flex gap-[1.2rem] items-center px-[1.5rem] py-[1.1rem] hover:bg-zinc-800 cursor-pointer rounded-[1rem]">
-      <div className="w-[4.5rem] h-[4.5rem] rounded-full bg-zinc-700 flex items-center justify-center text-[1.6rem]">
-        {initials || "?"}
-      </div>
+      <img
+        src={avatar || fallback}
+        alt={name || subline}
+        loading="lazy"
+        onError={(e) => {
+          // swap to fallback once; avoid infinite loop
+          const img = e.currentTarget;
+          if (img.src !== fallback) img.src = fallback;
+        }}
+        className="w-[4.5rem] h-[4.5rem] rounded-full object-cover"
+      />
       <div className="flex flex-col border-b border-zinc-800 pb-[0.4rem]">
-        <span className="text-white font-medium text-[1.5rem]">{name}</span>
-        <span className="text-zinc-400 text-[1.3rem] truncate max-w-[16rem]">{email}</span>
+        <span className="text-white font-medium text-[1.5rem] truncate max-w-[16rem]">
+          {name || subline}
+        </span>
+        <span className="text-zinc-400 text-[1.3rem] truncate max-w-[16rem]">
+          {subline}
+        </span>
       </div>
     </li>
   );

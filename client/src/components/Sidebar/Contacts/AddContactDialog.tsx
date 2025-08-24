@@ -13,15 +13,28 @@ export default function AddContactDialog({ open, onClose }: Props) {
 
   if (!open) return null;
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const body = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim() || undefined,
+      email: email.trim().toLowerCase(),
+    };
+
     try {
-      await add({ firstName: firstName.trim(), lastName: lastName.trim() || undefined, email: email.trim().toLowerCase() });
+      await add(body);
       toast.success("Contact added");
       onClose();
       setFirstName(""); setLastName(""); setEmail("");
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message ?? "Failed to add contact");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        (err?.response?.status === 404
+          ? "No registered user with this email."
+          : err?.response?.status === 409
+          ? "Contact with this email already exists."
+          : "Failed to add contact");
+      toast.error(msg);
     }
   };
 
@@ -31,13 +44,13 @@ export default function AddContactDialog({ open, onClose }: Props) {
       <div className="relative w-[48rem] max-w-[90vw] bg-zinc-900 border border-zinc-800 rounded-[1.2rem] p-[2.0rem] text-white">
         <div className="flex items-center justify-between mb-[1.2rem]">
           <div className="flex items-center gap-[1.2rem]">
-            <button onClick={onClose} className="p-[0.8rem] rounded-full hover:bg-zinc-800">
+            <button onClick={onClose} className="p-[0.8rem] rounded-full hover:bg-zinc-800" title="Close">
               <Icon icon="solar:close-circle-linear" className="w-[2.4rem] h-[2.4rem]" />
             </button>
             <h3 className="text-[2.0rem] font-semibold">Add Contact</h3>
           </div>
           <button
-            onClick={onSubmit as any}
+            onClick={() => onSubmit()}
             className="px-[1.6rem] py-[0.8rem] rounded-[0.8rem] bg-purple-600 hover:bg-purple-500 disabled:opacity-60"
             disabled={saving || !firstName.trim() || !email.trim()}
           >
