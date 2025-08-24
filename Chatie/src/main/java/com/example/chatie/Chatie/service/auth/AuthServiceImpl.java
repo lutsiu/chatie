@@ -59,9 +59,9 @@ public class AuthServiceImpl implements AuthService {
                 : userRepository.findByUsernameIgnoreCase(id))
                 .orElseThrow(() -> new NotFoundException("Invalid credentials"));
 
-        if (!user.isActive() || user.getDeletedAt() != null) {
-            throw new NotFoundException("Account disabled");
-        }
+//        if (!user.isActive() || user.getDeletedAt() != null) {
+//            throw new NotFoundException("Account disabled");
+//        }
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
             throw new NotFoundException("Invalid credentials");
         }

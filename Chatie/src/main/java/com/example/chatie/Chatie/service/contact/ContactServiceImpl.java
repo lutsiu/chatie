@@ -13,7 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Service @RequiredArgsConstructor
+@Service
+@RequiredArgsConstructor
 public class ContactServiceImpl implements ContactService {
 
     private final ContactRepository repo;
@@ -28,15 +29,13 @@ public class ContactServiceImpl implements ContactService {
             throw new IllegalStateException("Contact with this email already exists.");
         }
 
-        // owner must exist
         User owner = users.findById(ownerId)
                 .orElseThrow(() -> new NotFoundException("Owner not found: " + ownerId));
 
-        // the contact's email MUST belong to a registered user
+        // email must belong to a registered user
         User target = users.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new NotFoundException("No registered user with email: " + dto.getEmail()));
 
-        // (optional, but sensible) don't allow adding yourself
         if (target.getId() == (owner.getId())) {
             throw new IllegalStateException("You cannot add yourself as a contact.");
         }
@@ -44,6 +43,7 @@ public class ContactServiceImpl implements ContactService {
         Contact c = Contact.builder()
                 .owner(owner)
                 .email(email)
+                .contactUser(target) // <-- link to the actual user
                 .firstName(dto.getFirstName().trim())
                 .lastName(dto.getLastName() == null || dto.getLastName().trim().isEmpty()
                         ? null
@@ -57,9 +57,15 @@ public class ContactServiceImpl implements ContactService {
     @Transactional(readOnly = true)
     public List<ContactDTO> list(Long ownerId, String q) {
         if (q != null && !q.trim().isEmpty()) {
-            return repo.search(ownerId, q.trim()).stream().map(ContactMapper::toDTO).toList();
+            return repo.search(ownerId, q.trim())
+                    .stream()
+                    .map(ContactMapper::toDTO)
+                    .toList();
         }
-        return repo.findByOwnerIdOrderByFirstNameAsc(ownerId).stream().map(ContactMapper::toDTO).toList();
+        return repo.findByOwnerIdOrderByFirstNameAsc(ownerId)
+                .stream()
+                .map(ContactMapper::toDTO)
+                .toList();
     }
 
     @Override
@@ -71,20 +77,24 @@ public class ContactServiceImpl implements ContactService {
         if (dto.getEmail() != null) {
             String newEmail = dto.getEmail().trim().toLowerCase();
 
-            // new email must be a registered user as well
-            users.findByEmailIgnoreCase(newEmail)
+            // must refer to a registered user
+            User target = users.findByEmailIgnoreCase(newEmail)
                     .orElseThrow(() -> new NotFoundException("No registered user with email: " + dto.getEmail()));
 
             if (!newEmail.equalsIgnoreCase(c.getEmail()) &&
                     repo.existsByOwnerIdAndEmailIgnoreCase(ownerId, newEmail)) {
                 throw new IllegalStateException("Contact with this email already exists.");
             }
+
+            if (target.getId() == (c.getOwner().getId())) {
+                throw new IllegalStateException("You cannot add yourself as a contact.");
+            }
+
             c.setEmail(newEmail);
+            c.setContactUser(target);
         }
 
-        if (dto.getFirstName() != null) c.setFirstName(dto.getFirstName().trim());
-        if (dto.getLastName() != null)  c.setLastName(dto.getLastName().trim().isEmpty() ? null : dto.getLastName().trim());
-
+        ContactMapper.applyUpdate(c, dto);
         return ContactMapper.toDTO(repo.save(c));
     }
 
