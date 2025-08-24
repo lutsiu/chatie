@@ -6,6 +6,7 @@ import com.example.chatie.Chatie.service.chat.ChatService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,15 +23,19 @@ public class ChatController {
         return ResponseEntity.ok(chatService.getById(id));
     }
 
-    // For now, pass userId as query param (until auth /me is wired)
     @GetMapping
-    public ResponseEntity<List<ChatDTO>> listForUser(@RequestParam Long userId) {
-        return ResponseEntity.ok(chatService.listForUser(userId));
+    public ResponseEntity<List<ChatDTO>> listMyChats(Authentication authentication) {
+        Long meId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(chatService.listForUser(meId));
     }
 
     @PostMapping
-    public ResponseEntity<ChatDTO> getOrCreate(@Valid @RequestBody CreateChatDTO dto) {
-        return ResponseEntity.ok(chatService.getOrCreate(dto.getUserAId(), dto.getUserBId()));
+    public ResponseEntity<ChatDTO> getOrCreate(
+            @Valid @RequestBody CreateChatDTO dto,
+            Authentication authentication
+    ) {
+        Long meId = Long.parseLong(authentication.getName());
+        return ResponseEntity.ok(chatService.getOrCreate(meId, dto.getOtherUserId()));
     }
 
     @DeleteMapping("/{id}")

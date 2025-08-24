@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/me/**").authenticated()
                         .requestMatchers("/api/contacts", "/api/contacts/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
-
+                        .requestMatchers("/api/chats/**").authenticated()
                         // keep other user endpoints open for now
                         .requestMatchers("/api/users/**").permitAll()
 

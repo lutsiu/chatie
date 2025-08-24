@@ -6,7 +6,5 @@ import lombok.*;
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class CreateChatDTO {
     @NotNull
-    private Long userAId;
-    @NotNull
-    private Long userBId;
+    private Long otherUserId; // the user you want to chat with
 }

@@ -1,7 +1,6 @@
 package com.example.chatie.Chatie.mapper;
 
 import com.example.chatie.Chatie.dto.chat.ChatDTO;
-import com.example.chatie.Chatie.dto.chat.CreateChatDTO;
 import com.example.chatie.Chatie.entity.Chat;
 import com.example.chatie.Chatie.entity.User;
 
@@ -16,6 +15,11 @@ public class ChatMapper {
                 .user2Username(c.getUser2().getUsername())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
+                .lastMessageId(c.getLastMessageId())
+                .lastMessageAt(c.getLastMessageAt())
+                .lastMessagePreview(c.getLastMessagePreview())
+                .user1LastReadAt(c.getUser1LastReadAt())
+                .user2LastReadAt(c.getUser2LastReadAt())
                 .build();
     }
 
@@ -25,5 +29,4 @@ public class ChatMapper {
                 .user2(u2)
                 .build();
     }
-
 }

@@ -1,7 +1,6 @@
 package com.example.chatie.Chatie.dto.chat;
 
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -16,4 +15,13 @@ public class ChatDTO {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // for left panel
+    private Long lastMessageId;
+    private LocalDateTime lastMessageAt;
+    private String lastMessagePreview;
+
+    // read markers (client can compute unread using lastMessageAt)
+    private LocalDateTime user1LastReadAt;
+    private LocalDateTime user2LastReadAt;
 }

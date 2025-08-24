@@ -42,6 +42,24 @@ CREATE TABLE chat (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
   FOREIGN KEY (created_by) REFERENCES user(id)
 );
+-- === Chat fast-list & read-state ===
+ALTER TABLE chat
+  ADD COLUMN last_message_id     BIGINT NULL AFTER updated_at,
+  ADD COLUMN last_message_at     TIMESTAMP NULL AFTER last_message_id,
+  ADD COLUMN last_message_preview VARCHAR(200) NULL AFTER last_message_at,
+  ADD COLUMN user1_last_read_at  TIMESTAMP NULL AFTER last_message_preview,
+  ADD COLUMN user2_last_read_at  TIMESTAMP NULL AFTER user1_last_read_at;
+
+CREATE INDEX idx_chat_last_activity ON chat (last_message_at, updated_at);
+CREATE INDEX idx_chat_user1 ON chat (user1_id);
+CREATE INDEX idx_chat_user2 ON chat (user2_id);
+
+-- Optional (once messages exist):
+-- ALTER TABLE chat
+--   ADD CONSTRAINT fk_chat_last_msg
+--   FOREIGN KEY (last_message_id) REFERENCES message(id)
+--   ON DELETE SET NULL;
+
 
 CREATE TABLE message (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,

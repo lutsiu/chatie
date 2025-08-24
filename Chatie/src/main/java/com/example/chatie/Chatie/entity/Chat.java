@@ -2,6 +2,7 @@ package com.example.chatie.Chatie.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,6 +17,7 @@ public class Chat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Normalize order in service: smaller ID in user1, larger in user2
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user1_id", nullable = false)
     private User user1;
@@ -29,6 +31,23 @@ public class Chat {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // Fast list (avoid joining messages list)
+    @Column(name = "last_message_id")
+    private Long lastMessageId; // keep primitive id to avoid hard dependency on Message (for now)
+
+    @Column(name = "last_message_at")
+    private LocalDateTime lastMessageAt;
+
+    @Column(name = "last_message_preview", length = 200)
+    private String lastMessagePreview;
+
+    // Per-participant read markers
+    @Column(name = "user1_last_read_at")
+    private LocalDateTime user1LastReadAt;
+
+    @Column(name = "user2_last_read_at")
+    private LocalDateTime user2LastReadAt;
 
     @PrePersist
     protected void onCreate() {

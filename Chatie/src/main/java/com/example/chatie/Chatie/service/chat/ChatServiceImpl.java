@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -30,20 +29,20 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public List<ChatDTO> listForUser(Long userId) {
-        return chatRepository.findByUser1IdOrUser2Id(userId, userId)
+        return chatRepository.findAllForUserOrderByActivity(userId)
                 .stream().map(ChatMapper::toDTO).toList();
     }
 
     @Override
     @Transactional
-    public ChatDTO getOrCreate(Long userAId, Long userBId) {
-        if (userAId.equals(userBId)) {
+    public ChatDTO getOrCreate(Long meId, Long otherUserId) {
+        if (meId.equals(otherUserId)) {
             throw new IllegalArgumentException("A chat requires two distinct users");
         }
 
         // Normalize order: smaller ID -> user1
-        Long first = Math.min(userAId, userBId);
-        Long second = Math.max(userAId, userBId);
+        Long first = Math.min(meId, otherUserId);
+        Long second = Math.max(meId, otherUserId);
 
         return chatRepository.findByUserPair(first, second)
                 .map(ChatMapper::toDTO)

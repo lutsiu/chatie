@@ -9,9 +9,6 @@ import java.util.Optional;
 
 public interface ChatRepository extends JpaRepository<Chat, Long> {
 
-    // All chats where the user participates
-    List<Chat> findByUser1IdOrUser2Id(Long userId1, Long userId2);
-
     // Pair lookup regardless of order
     @Query("""
       select c from Chat c
@@ -19,4 +16,12 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
          or (c.user1.id = :b and c.user2.id = :a)
     """)
     Optional<Chat> findByUserPair(Long a, Long b);
+
+    // List chats for a user, newest activity first
+    @Query("""
+      select c from Chat c
+      where c.user1.id = :userId or c.user2.id = :userId
+      order by coalesce(c.lastMessageAt, c.updatedAt) desc
+    """)
+    List<Chat> findAllForUserOrderByActivity(Long userId);
 }
