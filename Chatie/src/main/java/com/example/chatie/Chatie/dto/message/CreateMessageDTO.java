@@ -1,25 +1,19 @@
 package com.example.chatie.Chatie.dto.message;
 
-
-import jakarta.validation.constraints.NotBlank;
+import com.example.chatie.Chatie.entity.MessageType;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Builder
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+import java.util.List;
+
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class CreateMessageDTO {
+    @NotNull private Long chatId;
+    @NotNull private Long senderId;
 
-    @NotNull(message = "Chat ID is required")
-    private Long chatId;
+    @NotNull private MessageType type;
+    private String content;       // optional for non-TEXT
 
-    @NotNull(message = "Sender ID is required")
-    private Long senderId;
-
-    @NotBlank(message = "Message cannot be empty")
-    private String content;
+    private Long replyToId;       // optional
+    private List<AttachmentInputDTO> attachments; // optional (max 5 for mosaic)
 }

@@ -7,6 +7,8 @@ import com.example.chatie.Chatie.entity.User;
 public class ChatMapper {
 
     public static ChatDTO toDTO(Chat c) {
+        Long lastId = (c.getLastMessage() != null) ? c.getLastMessage().getId() : null;
+
         return ChatDTO.builder()
                 .id(c.getId())
                 .user1Id(c.getUser1().getId())
@@ -15,7 +17,7 @@ public class ChatMapper {
                 .user2Username(c.getUser2().getUsername())
                 .createdAt(c.getCreatedAt())
                 .updatedAt(c.getUpdatedAt())
-                .lastMessageId(c.getLastMessageId())
+                .lastMessageId(lastId)
                 .lastMessageAt(c.getLastMessageAt())
                 .lastMessagePreview(c.getLastMessagePreview())
                 .user1LastReadAt(c.getUser1LastReadAt())

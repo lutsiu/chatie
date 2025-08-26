@@ -1,23 +1,28 @@
 package com.example.chatie.Chatie.dto.message;
 
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.example.chatie.Chatie.entity.MessageType;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-@Builder
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class MessageDTO {
-
     private Long id;
     private Long chatId;
+
     private Long senderId;
     private String senderUsername;
+
+    private MessageType type;
     private String content;
+
+    private Long replyToId;
+    private String replyToPreview;   // small snippet
+
     private LocalDateTime createdAt;
+    private LocalDateTime editedAt;
+    private LocalDateTime deletedAt;
+
+    private List<AttachmentDTO> attachments;
 }

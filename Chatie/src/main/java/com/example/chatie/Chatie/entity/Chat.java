@@ -2,7 +2,6 @@ package com.example.chatie.Chatie.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,7 +16,7 @@ public class Chat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Normalize order in service: smaller ID in user1, larger in user2
+    // participants
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user1_id", nullable = false)
     private User user1;
@@ -26,28 +25,30 @@ public class Chat {
     @JoinColumn(name = "user2_id", nullable = false)
     private User user2;
 
-    @Column(name = "created_at", updatable = false, nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    // Fast list (avoid joining messages list)
-    @Column(name = "last_message_id")
-    private Long lastMessageId; // keep primitive id to avoid hard dependency on Message (for now)
+    // last message summary (for the left panel list)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "last_message_id")
+    private Message lastMessage;
 
     @Column(name = "last_message_at")
     private LocalDateTime lastMessageAt;
 
-    @Column(name = "last_message_preview", length = 200)
+    @Column(name = "last_message_preview", length = 160)
     private String lastMessagePreview;
 
-    // Per-participant read markers
+    // per-user read receipts
     @Column(name = "user1_last_read_at")
     private LocalDateTime user1LastReadAt;
 
     @Column(name = "user2_last_read_at")
     private LocalDateTime user2LastReadAt;
+
+    // timestamps
+    @Column(name = "created_at", updatable = false, nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {

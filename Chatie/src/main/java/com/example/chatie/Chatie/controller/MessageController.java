@@ -1,9 +1,9 @@
+// src/main/java/com/example/chatie/Chatie/controller/MessageController.java
 package com.example.chatie.Chatie.controller;
 
-import com.example.chatie.Chatie.dto.message.CreateMessageDTO;
-import com.example.chatie.Chatie.dto.message.MessageDTO;
-import com.example.chatie.Chatie.exception.global.NotFoundException;
+import com.example.chatie.Chatie.dto.message.*;
 import com.example.chatie.Chatie.service.message.MessageService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,34 +15,61 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MessageController {
 
-    private final MessageService messageService;
+    private final MessageService service;
 
-    // CREATE
+    // Create message (JSON with optional attachments URLs)
     @PostMapping
-    public ResponseEntity<MessageDTO> createMessage(@RequestBody CreateMessageDTO dto) {
-        return ResponseEntity.ok(messageService.createMessage(dto));
+    public ResponseEntity<MessageDTO> create(@Valid @RequestBody CreateMessageDTO dto) {
+        return ResponseEntity.ok(service.create(dto));
     }
 
-    // READ
-    @GetMapping("/{id}")
-    public ResponseEntity<MessageDTO> getMessageById(@PathVariable Long id) {
-        return ResponseEntity.ok(messageService.getMessageById(id));
+    // Edit text/caption
+    @PatchMapping("/{id}")
+    public ResponseEntity<MessageDTO> edit(
+            @PathVariable Long id,
+            @RequestBody EditMessageDTO body) {
+        return ResponseEntity.ok(service.edit(id, body));
     }
 
-    @GetMapping("/by-chat")
-    public ResponseEntity<List<MessageDTO>> getMessagesByChatId(@RequestParam Long chatId) {
-        return ResponseEntity.ok(messageService.getMessagesByChatId(chatId));
-    }
-
-    @GetMapping("/by-sender")
-    public ResponseEntity<List<MessageDTO>> getMessagesBySenderId(@RequestParam Long senderId) {
-        return ResponseEntity.ok(messageService.getMessagesBySenderId(senderId));
-    }
-
-    // DELETE
+    // Soft delete
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMessage(@PathVariable Long id) {
-        messageService.deleteMessage(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.softDelete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // Page (newest first), beforeId for infinite scroll
+    @GetMapping("/by-chat/{chatId}")
+    public ResponseEntity<List<MessageDTO>> page(
+            @PathVariable Long chatId,
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) Long beforeId
+    ) {
+        return ResponseEntity.ok(service.page(chatId, limit, beforeId));
+    }
+
+    // Pinned
+    @PostMapping("/pin")
+    public ResponseEntity<Void> pin(
+            @RequestParam Long chatId,
+            @RequestParam Long messageId,
+            @RequestParam Long userId    // until you wire /me
+    ) {
+        service.pin(chatId, messageId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/pin")
+    public ResponseEntity<Void> unpin(
+            @RequestParam Long chatId,
+            @RequestParam Long messageId
+    ) {
+        service.unpin(chatId, messageId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/pin/{chatId}")
+    public ResponseEntity<List<MessageDTO>> listPinned(@PathVariable Long chatId) {
+        return ResponseEntity.ok(service.listPinned(chatId));
     }
 }

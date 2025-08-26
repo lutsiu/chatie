@@ -1,10 +1,8 @@
 package com.example.chatie.Chatie.service.user;
 
-
 import com.example.chatie.Chatie.dto.user.UserDTO;
 import com.example.chatie.Chatie.dto.user.UserRegisterDTO;
 import com.example.chatie.Chatie.dto.user.UserUpdateDTO;
-import com.example.chatie.Chatie.entity.User;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +18,7 @@ public interface UserService {
     Optional<UserDTO> findByEmail(String email);
     Optional<UserDTO> findByUsername(String username);
 
+    List<UserDTO> search(String q, int limit, Long excludeUserId);
     // update
     UserDTO updateUser(Long userId, UserUpdateDTO updatedUserDTO);
 

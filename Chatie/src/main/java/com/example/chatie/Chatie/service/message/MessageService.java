@@ -1,19 +1,19 @@
 package com.example.chatie.Chatie.service.message;
 
-import com.example.chatie.Chatie.dto.message.CreateMessageDTO;
-import com.example.chatie.Chatie.dto.message.MessageDTO;
+import com.example.chatie.Chatie.dto.message.*;
 
 import java.util.List;
 
 public interface MessageService {
-    // CREATE
-    MessageDTO createMessage(CreateMessageDTO dto);
+    MessageDTO create(CreateMessageDTO dto);
+    MessageDTO edit(Long id, EditMessageDTO body);
+    void softDelete(Long id);
 
-    // READ
-    MessageDTO getMessageById(Long id);
-    List<MessageDTO> getMessagesByChatId(Long chatId);
-    List<MessageDTO> getMessagesBySenderId(Long senderId);
+    // pagination
+    List<MessageDTO> page(Long chatId, Integer pageSize, Long beforeId);
 
-    // DELETE
-    void deleteMessage(Long messageId);
+    // pinned
+    void pin(Long chatId, Long messageId, Long pinnedByUserId);
+    void unpin(Long chatId, Long messageId);
+    List<MessageDTO> listPinned(Long chatId);
 }

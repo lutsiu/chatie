@@ -10,6 +10,7 @@ import com.example.chatie.Chatie.exception.global.NotFoundException;
 import com.example.chatie.Chatie.mapper.UserMapper;
 import com.example.chatie.Chatie.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,5 +122,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsernameIgnoreCase(username.trim());
+    }
+
+    @Override
+    public List<UserDTO> search(String q, int limit, Long excludeUserId) {
+        String term = (q == null) ? "" : q.trim();
+        if (term.isEmpty()) return List.of();
+
+        int capped = Math.max(1, Math.min(limit, 50));
+        var page = PageRequest.of(0, capped);
+
+        return userRepository.search(term, page).stream()
+                // if excludeUserId is present, drop that user (primitive compare)
+                .filter(u -> excludeUserId == null || u.getId() != excludeUserId)
+                .map(UserMapper::toDTO)
+                .toList();
     }
 }

@@ -61,15 +61,31 @@ CREATE INDEX idx_chat_user2 ON chat (user2_id);
 --   ON DELETE SET NULL;
 
 
-CREATE TABLE message (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  chat_id BIGINT NOT NULL,
-  sender_id BIGINT NOT NULL,
-  content TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (chat_id) REFERENCES chat(id),
-  FOREIGN KEY (sender_id) REFERENCES user(id)
-);
+CREATE TABLE `message` (
+  `id`         BIGINT NOT NULL AUTO_INCREMENT,
+  `chat_id`    BIGINT NOT NULL,
+  `sender_id`  BIGINT NOT NULL,
+  `content`    TEXT   NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (`id`),
+
+  -- lookups & pagination
+  KEY `idx_message_chat_id` (`chat_id`),
+  KEY `idx_message_chat_id_id` (`chat_id`, `id`), -- good for newest-first & beforeId pagination
+  KEY `idx_message_sender_id` (`sender_id`),
+
+  CONSTRAINT `fk_message_chat`
+    FOREIGN KEY (`chat_id`) REFERENCES `chat`(`id`)
+    ON DELETE CASCADE,      -- delete messages when a chat is deleted
+
+  CONSTRAINT `fk_message_sender`
+    FOREIGN KEY (`sender_id`) REFERENCES `user`(`id`)
+    ON DELETE RESTRICT       -- do not allow deleting a user who still has messages
+) ENGINE=InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+
 
 CREATE TABLE chat_participant (
     id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,

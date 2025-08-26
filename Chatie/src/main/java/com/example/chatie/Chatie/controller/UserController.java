@@ -108,4 +108,14 @@ public class UserController {
         Long userId = Long.parseLong(authentication.getName());
         return ResponseEntity.ok(avatarService.uploadAvatar(userId, file));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<UserDTO>> searchUsers(
+            @RequestParam("q") String q,
+            @RequestParam(value = "limit", defaultValue = "20") int limit,
+            Authentication authentication
+    ) {
+        Long meId = authentication != null ? Long.parseLong(authentication.getName()) : null;
+        return ResponseEntity.ok(userService.search(q, limit, meId));
+    }
 }
