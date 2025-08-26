@@ -38,7 +38,7 @@ export default function Sidebar() {
             onOpenContacts={openContacts}   // ← pass down
           />
           <div className="p-4 text-white text-sm">
-            {isSearching ? <SearchList /> : <ChatList />}
+            {isSearching ? <SearchList query={query}/> : <ChatList />}
           </div>
         </>
       )}

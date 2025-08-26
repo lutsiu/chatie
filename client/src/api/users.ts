@@ -54,3 +54,8 @@ export const getUserByIdApi = async (id: number) => {
   const { data } = await api.get<User>(`/api/users/${id}`);
   return data;
 };
+
+export const searchUsersApi = async (q: string, limit = 20) => {
+  const { data } = await api.get<User[]>("/api/users/search", { params: { q, limit } });
+  return data;
+};

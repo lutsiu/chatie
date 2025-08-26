@@ -13,6 +13,8 @@ export default function SearchBar({
   setIsSearching,
   isSearching,
 }: Props) {
+
+  console.log(query)
   return (
     <div className="relative flex-1">
       <Icon

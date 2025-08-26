@@ -17,7 +17,6 @@ export type UpdateContactBody = Partial<CreateContactBody>;
 
 export const listContactsApi = async (q?: string) => {
   const { data } = await api.get<Contact[]>("/api/contacts", { params: q ? { q } : {} });
-  console.log(data);
   return data;
 };
 
