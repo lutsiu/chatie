@@ -1,3 +1,4 @@
+// src/api/users.ts
 import { api } from "./client";
 
 export type User = {
@@ -46,5 +47,10 @@ export const uploadMyAvatarApi = async (file: File) => {
   const fd = new FormData();
   fd.append("file", file); // must be "file"
   const { data } = await api.post<User>("/api/users/me/avatar", fd);
+  return data;
+};
+
+export const getUserByIdApi = async (id: number) => {
+  const { data } = await api.get<User>(`/api/users/${id}`);
   return data;
 };

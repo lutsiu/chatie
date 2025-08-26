@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import MessageList from "./MessageList";
 import Composer from "./Composer";
@@ -6,37 +6,63 @@ import PinnedBanner from "./PinnedBanner";
 import ChatHeader from "./ChatHeader";
 import UserInfoPanel from "./UserInfoPanel";
 
-const mockUser = {
-  name: "ТВІЙ ЛІКАР В ПОЗНАНІ",
-  username: "doctorpoznan",
-  status: "last seen recently",
-  avatar:
-    "https://images.unsplash.com/photo-1548142813-c348350df52b?q=80&w=400&auto=format&fit=crop",
-  media: Array.from({ length: 9 }).map((_, i) => ({
-    id: i + 1,
-    url: `https://picsum.photos/seed/chatmedia${i}/300/200`,
-  })),
-  files: [
-    { id: 1, name: "report.pdf", size: "1.2 MB" },
-    { id: 2, name: "invoice_2025.xlsx", size: "244 KB" },
-    { id: 3, name: "notes.txt", size: "8 KB" },
-  ],
-};
+import {
+  useSelectedPeerId,
+  useSelectedPeerUsername,
+} from "../../store/chats";            // <-- primitive selectors
+import { usePeerStore } from "../../store/peer";
+
+const initialsAvatar = (seed: string) =>
+  `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed || "User")}`;
 
 export default function ChatWindow() {
   const [profileOpen, setProfileOpen] = useState(false);
 
+  // primitive (stable) values from the chats store
+  const peerId = useSelectedPeerId();                 // number | null
+  const peerUsername = useSelectedPeerUsername() ?? ""; // string
+
+  // cached peer profile (if fetched)
+  const peerUser = usePeerStore((s) => (peerId ? s.byId[peerId] : undefined));
+
+  // fetch peer profile only when the numeric id changes
+  useEffect(() => {
+    if (peerId) {
+      usePeerStore.getState().ensure(peerId).catch(() => {});
+    }
+  }, [peerId]);
+
+  // build panel data from primitive pieces (memoized)
+  const panelUser = useMemo(() => {
+    if (!peerId) return null;
+    const fullName = `${peerUser?.firstName ?? ""} ${peerUser?.lastName ?? ""}`.trim();
+    const displayName = fullName || peerUsername;
+    const avatar = peerUser?.profilePictureUrl || initialsAvatar(displayName || peerUsername);
+
+    return {
+      name: displayName,
+      username: peerUsername,
+      status: "last seen recently", // replace when you expose lastSeenAt
+      avatar,
+      media: [] as { id: number; url: string }[],               // placeholder for future media
+      files: [] as { id: number; name: string; size: string }[],// placeholder for future files
+    };
+  }, [peerId, peerUser, peerUsername]);
+
   return (
     <section className="relative h-full w-full flex flex-col bg-zinc-950">
       <ChatHeader onOpenProfile={() => setProfileOpen(true)} />
-      <PinnedBanner/>
+      <PinnedBanner />
       <MessageList />
       <Composer />
-      <UserInfoPanel
-        open={profileOpen}
-        onClose={() => setProfileOpen(false)}
-        user={mockUser}
-      />
+
+      {panelUser && (
+        <UserInfoPanel
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          user={panelUser}
+        />
+      )}
     </section>
   );
 }
