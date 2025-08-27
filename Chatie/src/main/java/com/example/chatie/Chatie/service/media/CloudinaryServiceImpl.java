@@ -49,4 +49,45 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             throw new RuntimeException("Avatar upload failed: " + e.getMessage(), e);
         }
     }
+    @Override
+    public Uploaded uploadMessageMedia(long chatId, long senderId, MultipartFile file, String publicIdHint) {
+        try {
+            if (file == null || file.isEmpty()) throw new IllegalArgumentException("Empty file");
+
+            String folder = "chats/" + chatId + "/uploads/" + senderId;
+
+            Map<?, ?> res = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", folder,
+                            "use_filename", true,
+                            "unique_filename", true,
+                            "resource_type", "auto",     // auto-detect image/video/raw
+                            "public_id", publicIdHint != null ? publicIdHint : null
+                    )
+            );
+
+            String url = (String) res.get("secure_url");
+            if (url == null) throw new IllegalStateException("Cloudinary did not return secure_url");
+
+            Number width    = (Number) res.get("width");
+            Number height   = (Number) res.get("height");
+            Number duration = (Number) res.get("duration"); // videos only
+            Number bytes    = (Number) res.get("bytes");
+
+            return Uploaded.builder()
+                    .url(url)
+                    .mime(file.getContentType())
+                    .bytes(bytes != null ? bytes.longValue() : file.getSize())
+                    .width(width != null ? width.intValue() : null)
+                    .height(height != null ? height.intValue() : null)
+                    .durationSec(duration != null ? (int) Math.round(duration.doubleValue()) : null)
+                    .originalName(file.getOriginalFilename())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Cloudinary message upload failed: {}", e.getMessage(), e);
+            throw new RuntimeException("Message media upload failed: " + e.getMessage(), e);
+        }
+    }
 }

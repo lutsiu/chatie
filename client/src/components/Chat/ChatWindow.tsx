@@ -42,7 +42,7 @@ export default function ChatWindow() {
     return {
       name: displayName,
       username: peerUsername,
-      status: "last seen recently", // replace when you expose lastSeenAt
+      status: "last seen recently", 
       avatar,
       media: [] as { id: number; url: string }[],               // placeholder for future media
       files: [] as { id: number; name: string; size: string }[],// placeholder for future files
