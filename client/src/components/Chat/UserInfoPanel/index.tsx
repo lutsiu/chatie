@@ -26,6 +26,8 @@ export default function UserInfoPanel({ open, onClose, user }: Props) {
   const [tab, setTab] = useState<"media" | "files">("media");
   const openViewer = useMediaViewer((s) => s.open);
 
+  
+
   const mediaItems = useMemo(
     () => user.media.map((m) => ({ id: m.id, url: m.url, type: "image" as const })),
     [user.media]
