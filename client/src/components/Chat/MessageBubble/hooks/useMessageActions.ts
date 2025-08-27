@@ -1,7 +1,8 @@
 // src/components/Chat/MessageBubble/hooks/useMessageActions.ts
 import { useMediaViewer } from "../../../../store/useMediaViewer";
 import { useReply } from "../../../../store/useReply";
-import { usePinned } from "../../../../store/usePinned";
+import { useMessagesStore } from "../../../../store/messages";
+import { useSelectedChatId } from "../../../../store/chats";
 
 type MediaItem = { url: string; type: "image" | "video"; id?: string | number };
 type FileItem = { url: string; name: string; size: number; mime?: string };
@@ -12,15 +13,18 @@ type Args = {
   text?: string;
   media?: MediaItem[];
   file?: FileItem;
-  /** Optional override if a parent wants custom pin behavior (e.g. backend pin) */
+  /** Optional override if a parent wants custom pin behavior */
   onPin?: () => void;
+  /** Optional explicit chatId (otherwise we use the selected chat) */
+  chatId?: number | null;
 };
 
-export function useMessageActions({ id, author, text, media, file, onPin }: Args) {
-  // stores
+export function useMessageActions({ id, author, text, media, file, onPin, chatId }: Args) {
   const { open } = useMediaViewer();
   const { start: startReply } = useReply();
-  const { setPinned } = usePinned();
+  const storePin = useMessagesStore((s) => s.pin);
+  const selectedChatId = useSelectedChatId();
+  const effectiveChatId = chatId ?? selectedChatId ?? null;
 
   // ---------- Viewer ----------
   const viewerItems =
@@ -32,8 +36,8 @@ export function useMessageActions({ id, author, text, media, file, onPin }: Args
 
   const openViewer = (index: number) => {
     if (!viewerItems.length) return;
-    const safeIndex = Math.max(0, Math.min(index, viewerItems.length - 1));
-    open(viewerItems, safeIndex);
+    const safe = Math.max(0, Math.min(index, viewerItems.length - 1));
+    open(viewerItems, safe);
   };
 
   // ---------- Helpers ----------
@@ -68,35 +72,17 @@ export function useMessageActions({ id, author, text, media, file, onPin }: Args
       });
       return;
     }
-    // fallback
     startReply({ id, author, kind: "text", text: "" });
   };
 
-  // ---------- Pin (local banner; can be swapped to backend pin) ----------
-  const triggerPin = onPin
-    ? onPin
-    : () => {
-        if (hasText) {
-          setPinned({ id, author, kind: "text", text: text! });
-          return;
-        }
-        if (hasFile) {
-          setPinned({ id, author, kind: "file", filename: file!.name });
-          return;
-        }
-        if (hasMedia) {
-          const onlyVideo = media!.every((m) => m.type === "video");
-          setPinned({
-            id,
-            author,
-            kind: "media",
-            label: onlyVideo ? "Video" : "Photo",
-            thumb: pickThumb(media!),
-          });
-          return;
-        }
-        setPinned({ id, author, kind: "text", text: "" });
-      };
+  // ---------- Pin (default → backend) ----------
+  const triggerPin =
+    onPin ??
+    (async () => {
+      if (!effectiveChatId) return;
+      await storePin(effectiveChatId, Number(id));
+      // Your store's `pin` already calls `fetchPinned(chatId)`, so the banner updates.
+    });
 
   return { openViewer, triggerReply, triggerPin, copyAvailable };
 }
