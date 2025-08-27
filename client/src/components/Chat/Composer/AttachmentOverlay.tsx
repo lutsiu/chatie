@@ -1,20 +1,20 @@
 // src/components/Chat/Composer/AttachmentOverlay.tsx
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import SendFileModal from "../Modals/SendFileModal";
 import SendMediaModal from "../Modals/SendMediaModal";
 import { useAttachment } from "../../../store/useAttachment";
+import { useSelectedChatId } from "../../../store/chats";
+import { useAuthStore } from "../../../store/auth";
+import { useMessagesStore } from "../../../store/messages";
+import { uploadMessageFilesApi } from "../../../api/messages";
 
 export default function AttachmentOverlay() {
-  const {
-    isOpen,
-    mode,          // 'document' | 'media' | null
-    files,
-    caption,       // used for file flow only
-    setCaption,
-    close,
-  } = useAttachment();
+  const { isOpen, mode, files, caption, setCaption, close } = useAttachment();
+  const chatId = useSelectedChatId();
+  const meId = useAuthStore((s) => s.user?.id ?? null);
+  const send = useMessagesStore((s) => s.send);
 
-  // Lock scroll + ESC while any attachment modal is open
+  // lock scroll + ESC
   useEffect(() => {
     if (!isOpen) return;
     const prev = document.body.style.overflow;
@@ -29,29 +29,56 @@ export default function AttachmentOverlay() {
 
   const file = files[0] ?? null;
 
-  // Media: expects a single object { files, caption }
-  const handleSendMedia = (data: { files: File[]; caption: string }) => {
-    console.log("MEDIA SEND", data);
-    close();
-  };
+  const handleSendMedia = useCallback(
+    async (data: { files: File[]; caption: string }) => {
+      if (!chatId || !meId || data.files.length === 0) return;
 
-  // File: uses store caption
-  const handleSendFile = () => {
-    console.log("FILE SEND", { file, caption });
-    close();
-  };
+      // 1) upload to backend (which uploads to Cloudinary)
+      const uploaded = await uploadMessageFilesApi(chatId, data.files, { senderId: meId });
+
+      // 2) choose type based on originals (any video → VIDEO, else IMAGE)
+      const anyVideo = data.files.some((f) => f.type.startsWith("video"));
+
+      // 3) send message with Cloudinary URLs
+      await send({
+        chatId,
+        type: anyVideo ? "VIDEO" : "IMAGE",
+        content: data.caption || "",
+        attachments: uploaded,
+      });
+
+      close();
+    },
+    [chatId, meId, send, close]
+  );
+
+  const handleSendFile = useCallback(
+    async () => {
+      if (!chatId || !meId || !file) return;
+
+      const [uploaded] = await uploadMessageFilesApi(chatId, [file], { senderId: meId });
+
+      await send({
+        chatId,
+        type: "FILE",
+        content: caption || "",
+        attachments: [uploaded],
+      });
+
+      setCaption("");
+      close();
+    },
+    [chatId, meId, file, caption, setCaption, close, send]
+  );
 
   return (
     <>
-      {/* Media modal (no caption prop; it manages its own caption) */}
       <SendMediaModal
         open={isOpen && mode === "media"}
         files={files}
         onCancel={close}
         onSend={handleSendMedia}
       />
-
-      {/* File modal (uses caption from attachment store) */}
       <SendFileModal
         open={isOpen && mode === "document"}
         file={file}
