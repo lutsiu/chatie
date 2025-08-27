@@ -1,4 +1,3 @@
-
 import MessageContextMenu from "../MessageContextMenu";
 import { useMessageRegistry } from "../../../store/useMessageRegistry";
 import { useContextMenu } from "./hooks/useContextMenu";
@@ -7,6 +6,8 @@ import ReplyPreview from "./components/ReplyPreview";
 import MediaMosaic from "./components/MediaMosaic";
 import FileAttachment from "./components/FileAttachment";
 import MetaBar from "./components/MetaBar";
+import { useSelectedChatId } from "../../../store/chats";
+import { useMessagesStore } from "../../../store/messages";
 import type { ReplyTarget } from "../../../store/useReply";
 
 type Media = { url: string; type: "image" | "video"; id?: string | number };
@@ -24,7 +25,7 @@ type Props = {
   /** reply preview must match the store union exactly */
   reply?: ReplyTarget;
   onPin?: () => void;
-  onDelete?: () => void;
+  onDelete?: () => void; // optional override
 };
 
 export default function MessageBubble({
@@ -41,7 +42,6 @@ export default function MessageBubble({
   onDelete,
 }: Props) {
   const { register, scrollTo } = useMessageRegistry();
-
   const { menuOpen, menuPos, handleContext, closeMenu } = useContextMenu();
   const { openViewer, triggerReply, triggerPin, copyAvailable } = useMessageActions({
     id,
@@ -51,6 +51,22 @@ export default function MessageBubble({
     file,
     onPin,
   });
+
+  // --- delete wiring (store + chat id) ---
+  const chatId = useSelectedChatId();
+  const remove = useMessagesStore((s) => s.remove);
+
+  const handleDelete = async () => {
+    if (!chatId) return;
+    // Simple confirm; replace with a custom modal if you want
+    const ok = window.confirm("Delete this message for everyone?");
+    if (!ok) return;
+    try {
+      await remove(chatId, Number(id)); // soft-deletes; UI updates optimistically
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const base =
     "max-w-[70%] rounded-[1.2rem] px-[1.2rem] py-[0.8rem] text-[1.45rem] leading-[1.35] shadow-sm my-[1rem]";
@@ -77,14 +93,23 @@ export default function MessageBubble({
         )}
 
         {/* Media */}
-        {hasMedia && <MediaMosaic items={media!.map(m => ({ url: m.url, type: m.type }))} onOpen={openViewer} />}
+        {hasMedia && (
+          <MediaMosaic
+            items={media!.map((m) => ({ url: m.url, type: m.type }))}
+            onOpen={openViewer}
+          />
+        )}
 
         {/* File */}
         {hasFile && <FileAttachment file={file!} isOwn={!!isOwn} />}
 
         {/* Text */}
         {hasText && (
-          <p className={`whitespace-pre-wrap break-words ${hasMedia || hasFile ? "mt-[0.6rem]" : ""}`}>
+          <p
+            className={`whitespace-pre-wrap break-words ${
+              hasMedia || hasFile ? "mt-[0.6rem]" : ""
+            }`}
+          >
             {text}
           </p>
         )}
@@ -102,14 +127,16 @@ export default function MessageBubble({
           onCopy={
             copyAvailable
               ? async () => {
-                  try { await navigator.clipboard.writeText(text!); } catch {
-                    console.log("Couldn't copy text properly...")
+                  try {
+                    await navigator.clipboard.writeText(text!);
+                  } catch {
+                    console.log("Couldn't copy text properly…");
                   }
                 }
               : undefined
           }
           onPin={onPin ?? triggerPin}
-          onDelete={onDelete ?? (() => console.log("delete", id))}
+          onDelete={onDelete ?? handleDelete}
         />
       )}
     </div>
