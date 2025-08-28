@@ -208,4 +208,20 @@ public class MessageServiceImpl implements MessageService {
                 .map(pm -> MessageMapper.toDTO(pm.getMessage()))
                 .toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MessageDTO> search(Long chatId, String rawQ, Integer pageSize, Long beforeId) {
+        String q = rawQ == null ? "" : rawQ.trim();
+        if (q.isEmpty()) return List.of();
+
+        int size = (pageSize == null || pageSize < 1 || pageSize > 100) ? 50 : pageSize;
+        var pageable = PageRequest.of(0, size);
+
+        var list = (beforeId == null)
+                ? messages.searchInChat(chatId, q, pageable)
+                : messages.searchInChatBefore(chatId, q, beforeId, pageable);
+
+        return list.stream().map(MessageMapper::toDTO).toList();
+    }
 }

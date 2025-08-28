@@ -28,4 +28,44 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
                                  Pageable pageable);
 
     Optional<Message> findByIdAndDeletedAtIsNull(Long id);
+
+    /* ---------- SEARCH (text + attachment filenames) ---------- */
+
+    @Query("""
+       select m from Message m
+       where m.chat.id = :chatId
+         and m.deletedAt is null
+         and (
+              lower(coalesce(m.content, '')) like lower(concat('%', :q, '%'))
+              or exists (
+                   select 1 from MessageAttachment a
+                   where a.message = m
+                     and lower(coalesce(a.originalName, '')) like lower(concat('%', :q, '%'))
+              )
+         )
+       order by m.id desc
+    """)
+    List<Message> searchInChat(@Param("chatId") Long chatId,
+                               @Param("q") String q,
+                               Pageable pageable);
+
+    @Query("""
+       select m from Message m
+       where m.chat.id = :chatId
+         and m.deletedAt is null
+         and m.id < :beforeId
+         and (
+              lower(coalesce(m.content, '')) like lower(concat('%', :q, '%'))
+              or exists (
+                   select 1 from MessageAttachment a
+                   where a.message = m
+                     and lower(coalesce(a.originalName, '')) like lower(concat('%', :q, '%'))
+              )
+         )
+       order by m.id desc
+    """)
+    List<Message> searchInChatBefore(@Param("chatId") Long chatId,
+                                     @Param("q") String q,
+                                     @Param("beforeId") Long beforeId,
+                                     Pageable pageable);
 }

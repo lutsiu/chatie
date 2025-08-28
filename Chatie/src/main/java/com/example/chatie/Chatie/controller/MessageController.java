@@ -71,6 +71,16 @@ public class MessageController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<MessageDTO>> search(
+            @RequestParam Long chatId,
+            @RequestParam String q,
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) Long beforeId
+    ) {
+        return ResponseEntity.ok(service.search(chatId, q, limit, beforeId));
+    }
+
     @DeleteMapping("/pin")
     public ResponseEntity<Void> unpin(
             @RequestParam Long chatId,
