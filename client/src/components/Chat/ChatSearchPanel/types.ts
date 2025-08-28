@@ -4,4 +4,5 @@ export type Result = {
   name: string;
   text: string;
   date: string;
+  onClick?: () => void;
 };

@@ -1,4 +1,3 @@
-// src/components/Chat/Header/index.tsx
 import { useEffect, useMemo } from "react";
 import ChatHeaderMenu from "../ChatHeaderMenu";
 import ChatDatePickerModal from "../ChatDatePickerModal";
@@ -79,7 +78,7 @@ export default function ChatHeader({ onOpenProfile }: Props) {
         />
       </header>
 
-      {isSearching && <ChatSearchPanel query={query} />}
+      {isSearching && <ChatSearchPanel setQuery={setQuery} query={query} />}
       {openMenu && <ChatHeaderMenu onClose={() => setOpenMenu(false)} />}
       <ChatDatePickerModal
         open={openCalendar}

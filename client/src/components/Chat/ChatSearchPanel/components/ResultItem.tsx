@@ -4,14 +4,29 @@ import { highlight } from "../utils/highlight";
 type Props = {
   r: Result;
   q: string;
+  setQuery: (q: string) => void;
 };
 
-export function ResultItem({ r, q }: Props) {
+export function ResultItem({ r, q, setQuery }: Props) {
+  const handleActivate = () => {
+    r.onClick?.();
+    setQuery("");
+  };
+
+  
   return (
     <li
       className="flex items-start gap-[1.2rem] px-[1.2rem] py-[1.2rem] hover:bg-zinc-800/70 cursor-pointer"
       role="option"
       aria-label={`${r.name}, ${r.date}`}
+      tabIndex={0}
+      onClick={handleActivate}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleActivate();
+        }
+      }}
     >
       <img
         src={r.avatar}

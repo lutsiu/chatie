@@ -128,3 +128,17 @@ export async function uploadMessageFilesApi(
   });
   return data;
 }
+
+
+export const searchMessagesApi = async (
+  chatId: number,
+  q: string,
+  opts?: { limit?: number; beforeId?: number }
+) => {
+  const params: any = { chatId, q };
+  if (opts?.limit != null) params.limit = opts.limit;
+  if (opts?.beforeId != null) params.beforeId = opts.beforeId;
+
+  const { data } = await api.get<Message[]>("/api/messages/search", { params });
+  return data;
+};
