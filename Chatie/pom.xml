@@ -60,6 +60,18 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- WebSocket + STOMP support -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+
+		<!-- (already brought by the starter, but harmless if present) -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-messaging</artifactId>
+		</dependency>
+
 		<!-- Dev tools -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

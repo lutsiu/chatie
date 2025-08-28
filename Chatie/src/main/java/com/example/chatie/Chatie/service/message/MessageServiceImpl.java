@@ -3,20 +3,17 @@ package com.example.chatie.Chatie.service.message;
 import com.example.chatie.Chatie.dto.message.CreateMessageDTO;
 import com.example.chatie.Chatie.dto.message.EditMessageDTO;
 import com.example.chatie.Chatie.dto.message.MessageDTO;
-import com.example.chatie.Chatie.entity.Chat;
-import com.example.chatie.Chatie.entity.ChatPinnedMessage;
-import com.example.chatie.Chatie.entity.ChatPinnedMessageId;
-import com.example.chatie.Chatie.entity.Message;
-import com.example.chatie.Chatie.entity.MessageAttachment;
-import com.example.chatie.Chatie.entity.MessageType;
-import com.example.chatie.Chatie.entity.User;
+import com.example.chatie.Chatie.dto.ws.WsEvent;
+import com.example.chatie.Chatie.entity.*;
 import com.example.chatie.Chatie.exception.global.NotFoundException;
 import com.example.chatie.Chatie.mapper.MessageMapper;
 import com.example.chatie.Chatie.repository.ChatPinnedMessageRepository;
 import com.example.chatie.Chatie.repository.ChatRepository;
 import com.example.chatie.Chatie.repository.MessageRepository;
 import com.example.chatie.Chatie.repository.UserRepository;
+import com.example.chatie.Chatie.ws.WsEventPublisher;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
@@ -34,7 +32,9 @@ public class MessageServiceImpl implements MessageService {
     private final UserRepository users;
     private final ChatPinnedMessageRepository pins;
 
-    /** Null-safe check that a user participates in the chat. */
+    // WS publisher
+    private final WsEventPublisher ws;
+
     private void ensureParticipant(Chat chat, Long userId) {
         Long u1 = (chat.getUser1() != null) ? chat.getUser1().getId() : null;
         Long u2 = (chat.getUser2() != null) ? chat.getUser2().getId() : null;
@@ -43,7 +43,6 @@ public class MessageServiceImpl implements MessageService {
         }
     }
 
-    /** Update chat's last-message summary (used by left panel). */
     private void touchChatWith(Message saved, Chat chat) {
         chat.setLastMessage(saved);
         chat.setLastMessageAt(saved.getCreatedAt());
@@ -59,7 +58,6 @@ public class MessageServiceImpl implements MessageService {
             throw new IllegalArgumentException("Message must have text or attachments.");
         }
 
-        // Fetch-join users to avoid proxies/NPE in ensureParticipant
         Chat chat = chats.findWithUsersById(dto.getChatId())
                 .orElseThrow(() -> new NotFoundException("Chat not found: " + dto.getChatId()));
         User sender = users.findById(dto.getSenderId())
@@ -77,7 +75,6 @@ public class MessageServiceImpl implements MessageService {
 
         Message m = MessageMapper.toEntity(dto, sender, chat, replyTo);
 
-        // Map attachments if any
         if (dto.getAttachments() != null && !dto.getAttachments().isEmpty()) {
             int pos = 0;
             for (var a : dto.getAttachments()) {
@@ -100,7 +97,9 @@ public class MessageServiceImpl implements MessageService {
         Message saved = messages.save(m);
         touchChatWith(saved, chat);
 
-        return MessageMapper.toDTO(saved);
+        MessageDTO out = MessageMapper.toDTO(saved);
+        ws.sendToChat(chat.getId(), new WsEvent<>("message.created", chat.getId(), out));
+        return out;
     }
 
     @Override
@@ -120,14 +119,15 @@ public class MessageServiceImpl implements MessageService {
         m.setEditedAt(LocalDateTime.now());
         Message saved = messages.save(m);
 
-        // If it’s the last message, refresh chat preview
         Chat chat = saved.getChat();
         if (chat.getLastMessage() != null && Objects.equals(chat.getLastMessage().getId(), saved.getId())) {
             chat.setLastMessagePreview(MessageMapper.buildPreview(saved));
             chats.save(chat);
         }
 
-        return MessageMapper.toDTO(saved);
+        MessageDTO out = MessageMapper.toDTO(saved);
+        ws.sendToChat(chat.getId(), new WsEvent<>("message.edited", chat.getId(), out));
+        return out;
     }
 
     @Override
@@ -138,14 +138,13 @@ public class MessageServiceImpl implements MessageService {
         if (m.getDeletedAt() != null) return;
 
         m.setDeletedAt(LocalDateTime.now());
-        messages.save(m);
+        Message saved = messages.save(m);
 
-        Chat chat = m.getChat();
-        if (chat.getLastMessage() != null && Objects.equals(chat.getLastMessage().getId(), m.getId())) {
-            // Find next newest non-deleted
+        Chat chat = saved.getChat();
+        if (chat.getLastMessage() != null && Objects.equals(chat.getLastMessage().getId(), saved.getId())) {
             var next = messages.findPage(chat.getId(), PageRequest.of(0, 1))
                     .stream()
-                    .filter(x -> !Objects.equals(x.getId(), m.getId()))
+                    .filter(x -> !Objects.equals(x.getId(), saved.getId()))
                     .findFirst();
 
             chat.setLastMessage(next.orElse(null));
@@ -153,6 +152,9 @@ public class MessageServiceImpl implements MessageService {
             chat.setLastMessagePreview(next.map(MessageMapper::buildPreview).orElse(null));
             chats.save(chat);
         }
+
+        MessageDTO out = MessageMapper.toDTO(saved);
+        ws.sendToChat(chat.getId(), new WsEvent<>("message.deleted", chat.getId(), out));
     }
 
     @Override
@@ -191,6 +193,8 @@ public class MessageServiceImpl implements MessageService {
                     .build();
             pins.save(pin);
         }
+
+        ws.sendToChat(chatId, new WsEvent<>("message.pinned", chatId, messageId));
     }
 
     @Override
@@ -198,6 +202,8 @@ public class MessageServiceImpl implements MessageService {
     public void unpin(Long chatId, Long messageId) {
         var id = new ChatPinnedMessageId(chatId, messageId);
         pins.deleteById(id);
+
+        ws.sendToChat(chatId, new WsEvent<>("message.unpinned", chatId, messageId));
     }
 
     @Override

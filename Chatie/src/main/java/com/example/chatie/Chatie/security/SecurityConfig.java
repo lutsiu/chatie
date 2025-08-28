@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/users/me/avatar").authenticated()
                         .requestMatchers("/api/chats/**").authenticated()
                         .requestMatchers("/api/messages/**").authenticated()
+                        .requestMatchers("/ws/**").permitAll()     // allow handshake + transports
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // keep other user endpoints open for now
                         .requestMatchers("/api/users/**").permitAll()
 
