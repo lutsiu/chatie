@@ -16,6 +16,7 @@ public class UserMapper {
                 .lastName(user.getLastName())
                 .profilePictureUrl(user.getProfilePictureUrl())
                 .about(user.getAbout())
+                .lastLoginAt(user.getLastLoginAt())
                 .build();
     }
 
