@@ -30,6 +30,24 @@ const formatBytes = (n?: number | null) => {
   return `${gb.toFixed(2)} GB`;
 };
 
+// --- NEW: simple formatter for last seen ---
+function formatLastSeen(iso?: string | null) {
+  if (!iso) return "last seen recently";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "last seen recently";
+
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const y = new Date(now);
+  y.setDate(now.getDate() - 1);
+
+  if (sameDay) return `last seen today at ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  if (d.toDateString() === y.toDateString()) {
+    return `last seen yesterday at ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  }
+  return `last seen ${d.toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" })}`;
+}
+
 export default function ChatWindow() {
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -86,7 +104,6 @@ export default function ChatWindow() {
         }
       }
 
-      // newest first
       media.reverse();
       files.reverse();
 
@@ -105,6 +122,12 @@ export default function ChatWindow() {
     return () => unsub();
   }, [chatId]);
 
+  // --- NEW: build status with lastLoginAt if present ---
+  const statusLabel = useMemo(
+    () => formatLastSeen((peerUser as any)?.lastLoginAt as string | undefined),
+    [peerUser]
+  );
+
   // build panel user data
   const panelUser = useMemo(() => {
     if (!peerId) return null;
@@ -115,12 +138,12 @@ export default function ChatWindow() {
     return {
       name: displayName,
       username: peerUsername,
-      status: "last seen recently",
+      status: statusLabel || "last seen recently", // fallback if anything goes wrong
       avatar,
       media: panelMedia,
       files: panelFiles,
     };
-  }, [peerId, peerUser, peerUsername, panelMedia, panelFiles]);
+  }, [peerId, peerUser, peerUsername, panelMedia, panelFiles, statusLabel]);
 
   return (
     <section className="relative h-full w-full flex flex-col bg-zinc-950">

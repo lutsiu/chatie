@@ -1,3 +1,4 @@
+import { useChatHeader } from "../../ChatHeader/hooks/useChatHeader";
 import type { Result } from "../types";
 import { highlight } from "../utils/highlight";
 
@@ -8,8 +9,12 @@ type Props = {
 };
 
 export function ResultItem({ r, q, setQuery }: Props) {
+  
+  const {closeSearch} = useChatHeader();
+  
   const handleActivate = () => {
     r.onClick?.();
+    closeSearch();
     setQuery("");
   };
 

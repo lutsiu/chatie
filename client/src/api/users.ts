@@ -9,6 +9,7 @@ export type User = {
   lastName: string | null;
   profilePictureUrl: string | null;
   about: string | null;
+  lastLoginAt?: string | null;
 };
 
 export type RegisterBody = {
