@@ -1,3 +1,4 @@
+// src/components/Chat/ChatWindow.tsx
 import { useEffect, useMemo, useState } from "react";
 
 import MessageList from "./MessageList";
@@ -15,6 +16,9 @@ import { usePeerStore } from "../../store/peer";
 import { useMessagesStore } from "../../store/messages";
 import type { Message } from "../../api/messages";
 
+// 👉 your combined socket hook
+import { useChatChannel } from "../../realtime/useChatChannel";
+
 const initialsAvatar = (seed: string) =>
   `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed || "User")}`;
 
@@ -30,7 +34,6 @@ const formatBytes = (n?: number | null) => {
   return `${gb.toFixed(2)} GB`;
 };
 
-// --- NEW: simple formatter for last seen ---
 function formatLastSeen(iso?: string | null) {
   if (!iso) return "last seen recently";
   const d = new Date(iso);
@@ -55,6 +58,9 @@ export default function ChatWindow() {
   const chatId = useSelectedChatId();
   const peerId = useSelectedPeerId();
   const peerUsername = useSelectedPeerUsername() ?? "";
+
+  // subscribe to this chat's WS topic (handles created/edited/deleted + pin/unpin)
+  useChatChannel(chatId);
 
   // cached peer profile
   const peerUser = usePeerStore((s) => (peerId ? s.byId[peerId] : undefined));
@@ -85,7 +91,6 @@ export default function ChatWindow() {
         for (const a of m.attachments ?? []) {
           if (!a?.url) continue;
 
-          // put only images into Media; everything else goes to Files
           if (isImage(a.mime) || m.type === "IMAGE") {
             media.push({ id: a.id, url: a.url });
           } else {
@@ -111,10 +116,10 @@ export default function ChatWindow() {
       setPanelFiles(files);
     };
 
-    // seed with current bucket
+    // seed from current bucket
     computeFrom(useMessagesStore.getState().byChat[chatId]?.items as Message[] | undefined);
 
-    // recompute on ANY store update (handles in-place mutations like push/unshift)
+    // recompute on ANY store update
     const unsub = useMessagesStore.subscribe((state) => {
       computeFrom(state.byChat[chatId!]?.items as Message[] | undefined);
     });
@@ -122,13 +127,11 @@ export default function ChatWindow() {
     return () => unsub();
   }, [chatId]);
 
-  // --- NEW: build status with lastLoginAt if present ---
   const statusLabel = useMemo(
     () => formatLastSeen((peerUser as any)?.lastLoginAt as string | undefined),
     [peerUser]
   );
 
-  // build panel user data
   const panelUser = useMemo(() => {
     if (!peerId) return null;
     const fullName = `${peerUser?.firstName ?? ""} ${peerUser?.lastName ?? ""}`.trim();
@@ -138,7 +141,7 @@ export default function ChatWindow() {
     return {
       name: displayName,
       username: peerUsername,
-      status: statusLabel || "last seen recently", // fallback if anything goes wrong
+      status: statusLabel || "last seen recently",
       avatar,
       media: panelMedia,
       files: panelFiles,

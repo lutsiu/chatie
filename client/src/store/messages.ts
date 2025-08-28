@@ -53,23 +53,27 @@ type State = {
   pin: (chatId: number, messageId: number) => Promise<void>;
   unpin: (chatId: number, messageId: number) => Promise<void>;
 
-  /* utility (useful when sockets arrive) */
+  /* utility (sockets) */
   applyIncoming: (msg: Message) => void;
 };
 
-const ensureBucket = (s: State, chatId: number): ChatBucket => {
-  if (!s.byChat[chatId]) {
-    s.byChat[chatId] = {
-      items: [],
-      loadingFirst: false,
-      loadingMore: false,
-      error: null,
-      topReached: false,
-      initialized: false,
-      seenIds: new Set<number>(),
-    };
-  }
-  return s.byChat[chatId];
+/** Pure helper that never mutates existing state objects. */
+const ensureBucketSafe = (
+  byChat: State["byChat"],
+  chatId: number
+): [ChatBucket, State["byChat"]] => {
+  const existing = byChat[chatId];
+  if (existing) return [existing, byChat];
+  const bucket: ChatBucket = {
+    items: [],
+    loadingFirst: false,
+    loadingMore: false,
+    error: null,
+    topReached: false,
+    initialized: false,
+    seenIds: new Set<number>(),
+  };
+  return [bucket, { ...byChat, [chatId]: bucket }];
 };
 
 export const useMessagesStore = create<State>()((set, get) => ({
@@ -78,37 +82,43 @@ export const useMessagesStore = create<State>()((set, get) => ({
   pageSize: 30,
 
   ensureFirstPage: async (chatId, force = false) => {
+    // mark loading (immutably)
     set((s) => {
-      const b = ensureBucket(s, chatId);
+      const [b, newByChat] = ensureBucketSafe(s.byChat, chatId);
       if (b.initialized && !force) return s;
-      b.loadingFirst = true;
-      b.error = null;
-      return { ...s };
+      const updatedBucket: ChatBucket = { ...b, loadingFirst: true, error: null };
+      return {
+        ...s,
+        byChat: { ...newByChat, [chatId]: updatedBucket },
+      };
     });
 
     try {
       const data = await listMessagesApi(chatId, { limit: get().pageSize });
-      // server returns DESC; convert to ASC
-      const asc = [...data].reverse();
+      const asc = [...data].reverse(); // convert to ASC
+
       set((s) => {
-        const b = ensureBucket(s, chatId);
-        b.items = [];
-        b.seenIds.clear();
-        asc.forEach((m) => {
-          b.items.push(m);
-          b.seenIds.add(m.id);
-        });
-        b.topReached = data.length < get().pageSize; // if fewer than requested, no more older
-        b.loadingFirst = false;
-        b.initialized = true;
-        return { ...s };
+        const [b, byChat2] = ensureBucketSafe(s.byChat, chatId);
+        const nextSeen = new Set<number>();
+        asc.forEach((m) => nextSeen.add(m.id));
+
+        const updated: ChatBucket = {
+          ...b,
+          items: asc,                       // NEW ARRAY
+          seenIds: nextSeen,                // NEW SET
+          topReached: data.length < get().pageSize,
+          loadingFirst: false,
+          initialized: true,
+          error: null,
+        };
+
+        return { ...s, byChat: { ...byChat2, [chatId]: updated } };
       });
     } catch (e: any) {
       set((s) => {
-        const b = ensureBucket(s, chatId);
-        b.loadingFirst = false;
-        b.error = e?.response?.data?.message || e?.message || "Failed to load messages";
-        return { ...s };
+        const [b, byChat2] = ensureBucketSafe(s.byChat, chatId);
+        const updated: ChatBucket = { ...b, loadingFirst: false, error: e?.response?.data?.message || e?.message || "Failed to load messages" };
+        return { ...s, byChat: { ...byChat2, [chatId]: updated } };
       });
       throw e;
     }
@@ -119,11 +129,12 @@ export const useMessagesStore = create<State>()((set, get) => ({
     if (!b || b.loadingMore || b.topReached) return;
 
     const oldestId = b.items[0]?.id;
+
+    // set loadingMore immutably
     set((s) => {
-      const bb = ensureBucket(s, chatId);
-      bb.loadingMore = true;
-      bb.error = null;
-      return { ...s };
+      const [bucket, byChat2] = ensureBucketSafe(s.byChat, chatId);
+      const updated: ChatBucket = { ...bucket, loadingMore: true, error: null };
+      return { ...s, byChat: { ...byChat2, [chatId]: updated } };
     });
 
     try {
@@ -131,26 +142,37 @@ export const useMessagesStore = create<State>()((set, get) => ({
         limit: get().pageSize,
         beforeId: oldestId,
       });
-      // data is DESC older->new, so reverse to ASC and prepend
-      const asc = [...data].reverse();
+      const asc = [...data].reverse(); // older → newer block
+
       set((s) => {
-        const bb = ensureBucket(s, chatId);
-        asc.forEach((m) => {
-          if (!bb.seenIds.has(m.id)) {
-            bb.items.unshift(m);
-            bb.seenIds.add(m.id);
+        const [bucket, byChat2] = ensureBucketSafe(s.byChat, chatId);
+        const seen = new Set(bucket.seenIds);
+        const toPrepend: MessageLocal[] = [];
+        for (const m of asc) {
+          if (!seen.has(m.id)) {
+            seen.add(m.id);
+            toPrepend.push(m);
           }
-        });
-        bb.topReached = data.length < get().pageSize;
-        bb.loadingMore = false;
-        return { ...s };
+        }
+        const nextItems = toPrepend.length ? [...toPrepend, ...bucket.items] : bucket.items;
+        const updated: ChatBucket = {
+          ...bucket,
+          items: nextItems === bucket.items ? [...bucket.items] : nextItems, // new ref either way
+          seenIds: seen,
+          topReached: data.length < get().pageSize,
+          loadingMore: false,
+        };
+        return { ...s, byChat: { ...byChat2, [chatId]: updated } };
       });
     } catch (e: any) {
       set((s) => {
-        const bb = ensureBucket(s, chatId);
-        bb.loadingMore = false;
-        bb.error = e?.response?.data?.message || e?.message || "Failed to load older messages";
-        return { ...s };
+        const [bucket, byChat2] = ensureBucketSafe(s.byChat, chatId);
+        const updated: ChatBucket = {
+          ...bucket,
+          loadingMore: false,
+          error: e?.response?.data?.message || e?.message || "Failed to load older messages",
+        };
+        return { ...s, byChat: { ...byChat2, [chatId]: updated } };
       });
       throw e;
     }
@@ -167,78 +189,112 @@ export const useMessagesStore = create<State>()((set, get) => ({
   },
 
   send: async (body) => {
-    const meId = useAuthStore.getState().user?.id;
-    if (!meId) {
-      console.warn("send(): no auth user");
-      return null;
-    }
-    const chatId = body.chatId;
+  const meId = useAuthStore.getState().user?.id;
+  if (!meId) {
+    console.warn("send(): no auth user");
+    return null;
+  }
+  const chatId = body.chatId;
 
-    // optimistic message
-    const tempId = -Math.floor(Math.random() * 10_000_000) - 1; // negative temp id
-    const nowIso = new Date().toISOString();
-    const optimistic: MessageLocal = {
-      id: tempId,
-      chatId,
-      senderId: meId,
-      senderUsername: useAuthStore.getState().user?.username || "me",
-      type: body.type,
-      content: body.content ?? null,
-      replyToId: body.replyToId ?? null,
-      replyToPreview: null,
-      createdAt: nowIso,
-      editedAt: null,
-      deletedAt: null,
-      attachments:
-        (body.attachments || []).map((a, i) => ({
-          id: -i - 1,
-          url: a.url,
-          mime: a.mime ?? null,
-          sizeBytes: a.sizeBytes ?? null,
-          width: a.width ?? null,
-          height: a.height ?? null,
-          durationSec: a.durationSec ?? null,
-          originalName: a.originalName ?? null,
-          position: a.position ?? i,
-        })),
-      _localStatus: "sending",
-    };
+  // optimistic message (negative temp id)
+  const tempId = -Math.floor(Math.random() * 10_000_000) - 1;
+  const nowIso = new Date().toISOString();
+  const optimistic: MessageLocal = {
+    id: tempId,
+    chatId,
+    senderId: meId,
+    senderUsername: useAuthStore.getState().user?.username || "me",
+    type: body.type,
+    content: body.content ?? null,
+    replyToId: body.replyToId ?? null,
+    replyToPreview: null,
+    createdAt: nowIso,
+    editedAt: null,
+    deletedAt: null,
+    attachments:
+      (body.attachments || []).map((a, i) => ({
+        id: -i - 1,
+        url: a.url,
+        mime: a.mime ?? null,
+        sizeBytes: a.sizeBytes ?? null,
+        width: a.width ?? null,
+        height: a.height ?? null,
+        durationSec: a.durationSec ?? null,
+        originalName: a.originalName ?? null,
+        position: a.position ?? i,
+      })),
+    _localStatus: "sending",
+  };
+
+  // append optimistic (new array)
+  set((s) => {
+    const [b, byChat2] = ensureBucketSafe(s.byChat, chatId);
+    const nextItems = [...b.items, optimistic];
+    const updated: ChatBucket = { ...b, items: nextItems };
+    return { ...s, byChat: { ...byChat2, [chatId]: updated } };
+  });
+
+  try {
+    const saved = await createMessageApi({ ...body, senderId: meId });
 
     set((s) => {
-      const b = ensureBucket(s, chatId);
-      b.items.push(optimistic);
-      return { ...s };
+      const [b, byChat2] = ensureBucketSafe(s.byChat, chatId);
+
+      const tempIdx   = b.items.findIndex((m) => m.id === tempId);
+      const savedIdx  = b.items.findIndex((m) => m.id === saved.id);
+
+      let nextItems = b.items;
+
+      if (savedIdx !== -1 && tempIdx !== -1) {
+        // WS already inserted saved; remove optimistic
+        nextItems = [
+          ...b.items.slice(0, tempIdx),
+          ...b.items.slice(tempIdx + 1),
+        ];
+      } else if (tempIdx !== -1) {
+        // Replace optimistic with saved
+        nextItems = [...b.items];
+        nextItems[tempIdx] = saved;
+      } else if (savedIdx === -1) {
+        // Neither exists (e.g., no optimistic or it was already removed)
+        nextItems = [...b.items, saved];
+      } else {
+        // saved already present, nothing to do
+        nextItems = [...b.items];
+      }
+
+      const nextSeen = new Set(b.seenIds);
+      nextSeen.add(saved.id);
+
+      const updated: ChatBucket = { ...b, items: nextItems, seenIds: nextSeen };
+      return { ...s, byChat: { ...byChat2, [chatId]: updated } };
     });
 
-    try {
-      const saved = await createMessageApi({ ...body, senderId: meId });
-      set((s) => {
-        const b = ensureBucket(s, chatId);
-        const idx = b.items.findIndex((m) => m.id === tempId);
-        if (idx >= 0) b.items[idx] = saved; // replace
-        else b.items.push(saved);          // (fallback) append
-        b.seenIds.add(saved.id);
-        return { ...s };
-      });
-      return saved;
-    } catch (e) {
-      set((s) => {
-        const b = ensureBucket(s, chatId);
-        const idx = b.items.findIndex((m) => m.id === tempId);
-        if (idx >= 0) b.items[idx]._localStatus = "error";
-        return { ...s };
-      });
-      return null;
-    }
-  },
+    return saved;
+  } catch (e) {
+    // mark optimistic as error (new array)
+    set((s) => {
+      const [b, byChat2] = ensureBucketSafe(s.byChat, chatId);
+      const idx = b.items.findIndex((m) => m.id === tempId);
+      let nextItems = b.items;
+      if (idx >= 0) {
+        nextItems = [...b.items];
+        nextItems[idx] = { ...nextItems[idx], _localStatus: "error" };
+      }
+      const updated: ChatBucket = { ...b, items: nextItems };
+      return { ...s, byChat: { ...byChat2, [chatId]: updated } };
+    });
+    return null;
+  }
+},
 
   edit: async (chatId, id, content) => {
     const saved = await editMessageApi(id, { content });
     set((s) => {
-      const b = ensureBucket(s, chatId);
-      const idx = b.items.findIndex((m) => m.id === id);
-      if (idx >= 0) b.items[idx] = { ...b.items[idx], ...saved };
-      return { ...s };
+      const [b, byChat2] = ensureBucketSafe(s.byChat, chatId);
+      const nextItems = b.items.map((m) => (m.id === id ? { ...(m as Message), ...saved } : m));
+      const updated: ChatBucket = { ...b, items: nextItems };
+      return { ...s, byChat: { ...byChat2, [chatId]: updated } };
     });
     return saved;
   },
@@ -246,12 +302,11 @@ export const useMessagesStore = create<State>()((set, get) => ({
   remove: async (chatId, id) => {
     await deleteMessageApi(id);
     set((s) => {
-      const b = ensureBucket(s, chatId);
-      const idx = b.items.findIndex((m) => m.id === id);
-      if (idx >= 0) {
-        b.items[idx] = { ...b.items[idx], deletedAt: new Date().toISOString() };
-      }
-      return { ...s };
+      const [b, byChat2] = ensureBucketSafe(s.byChat, chatId);
+      const nowIso = new Date().toISOString();
+      const nextItems = b.items.map((m) => (m.id === id ? { ...m, deletedAt: nowIso } : m));
+      const updated: ChatBucket = { ...b, items: nextItems };
+      return { ...s, byChat: { ...byChat2, [chatId]: updated } };
     });
   },
 
@@ -300,22 +355,49 @@ export const useMessagesStore = create<State>()((set, get) => ({
     await get().fetchPinned(chatId);
   },
 
-  /* ----- incoming (for future sockets/SSE) ----- */
+  /* ----- incoming via sockets ----- */
 
   applyIncoming: (msg: Message) => {
-    const chatId = msg.chatId;
-    set((s) => {
-      const b = ensureBucket(s, chatId);
-      if (!b.seenIds.has(msg.id)) {
-        b.items.push(msg);
-        b.seenIds.add(msg.id);
-      } else {
-        const idx = b.items.findIndex((m) => m.id === msg.id);
-        if (idx >= 0) b.items[idx] = msg;
-      }
-      return { ...s };
-    });
-  },
+  const chatId = msg.chatId;
+  set((s) => {
+    const [b, byChat2] = ensureBucketSafe(s.byChat, chatId);
+    const seen = new Set(b.seenIds);
+
+    const savedIdx = b.items.findIndex((m) => m.id === msg.id);
+
+    // Try to match an optimistic message to replace:
+    const tempIdx = b.items.findIndex(
+      (m) =>
+        (m as any)._localStatus === "sending" &&
+        m.senderId === msg.senderId &&
+        m.type === msg.type &&
+        (m.content ?? "") === (msg.content ?? "") &&
+        (m.replyToId ?? null) === (msg.replyToId ?? null) &&
+        (m.attachments?.length ?? 0) === (msg.attachments?.length ?? 0)
+    );
+
+    let nextItems: MessageLocal[];
+
+    if (savedIdx !== -1) {
+      // Update existing saved
+      nextItems = [...b.items];
+      nextItems[savedIdx] = { ...(nextItems[savedIdx] as Message), ...msg };
+    } else if (tempIdx !== -1) {
+      // Replace optimistic with saved
+      nextItems = [...b.items];
+      nextItems[tempIdx] = msg;
+    } else {
+      // Append new
+      nextItems = [...b.items, msg];
+    }
+
+    seen.add(msg.id);
+
+    const updated: ChatBucket = { ...b, items: nextItems, seenIds: seen };
+    return { ...s, byChat: { ...byChat2, [chatId]: updated } };
+  });
+},
+
 }));
 
 const requireAuthId = (): number => {
