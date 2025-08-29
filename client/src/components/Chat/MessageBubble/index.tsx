@@ -69,7 +69,7 @@ export default function MessageBubble({
   };
 
   const base =
-    "max-w-[70%] rounded-[1.2rem] px-[1.2rem] py-[0.8rem] text-[1.45rem] leading-[1.35] shadow-sm my-[1rem]";
+    "lg:max-w-[70%] rounded-[1.2rem] px-[1.2rem] py-[0.8rem] text-[1.45rem] leading-[1.35] shadow-sm my-[1rem]";
   const colors = isOwn ? "bg-purple-600/90 text-white" : "bg-zinc-800 text-zinc-100";
 
   const hasMedia = !!media?.length;

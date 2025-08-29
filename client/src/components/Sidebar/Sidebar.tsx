@@ -23,7 +23,7 @@ export default function Sidebar() {
   const closeContacts = () => setShowContacts(false); // ← add
 
   return (
-    <aside className="relative w-[28rem] bg-zinc-900 h-full border-r border-zinc-800 flex flex-col">
+    <aside className="relative w-full md:w-[28rem] bg-zinc-900 h-full border-r border-zinc-800 flex flex-col">
       {showSettings ? (
         <SettingsView onBack={closeSettings} onClose={closeSettings} />
       ) : (

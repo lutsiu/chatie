@@ -1,5 +1,8 @@
 // src/components/Chat/ChatHeader/index.tsx
 import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Icon } from "@iconify/react";
+
 import ChatHeaderMenu from "../ChatHeaderMenu";
 import ChatDatePickerModal from "../ChatDatePickerModal";
 import { AvatarButton } from "./components/AvatarButton";
@@ -13,6 +16,9 @@ import type { Props } from "./types";
 import {
   useSelectedPeerId,
   useSelectedPeerUsername,
+  useSelectedChatId,
+  // ⬇️ if your store exposes the root hook for actions, import it too:
+  useChatsStore,
 } from "../../../store/chats";
 import { usePeerStore } from "../../../store/peer";
 
@@ -56,8 +62,14 @@ export default function ChatHeader({ onOpenProfile }: Props) {
     closeSearch,
   } = useChatHeader();
 
-  const peerId = useSelectedPeerId();               // primitive
-  const peerUsername = useSelectedPeerUsername();   // primitive
+  const navigate = useNavigate();
+
+  const chatId = useSelectedChatId();              // primitive
+  const peerId = useSelectedPeerId();              // primitive
+  const peerUsername = useSelectedPeerUsername();  // primitive
+
+  // get the action that selects/deselects a chat (expects number | null)
+  const selectChat = useChatsStore((s) => s.select);
 
   // peer profile (may be undefined until fetched)
   const peerUser = usePeerStore((s) => (peerId ? s.byId[peerId] : undefined));
@@ -83,9 +95,34 @@ export default function ChatHeader({ onOpenProfile }: Props) {
   // compute subtitle with lastLoginAt if present; fallback otherwise
   const subtitle = formatLastSeen(peerUser?.lastLoginAt as string | undefined);
 
+  // show back button on mobile only when a chat is selected
+  const showBack = !!chatId;
+
+  const handleBack = () => {
+    // clear current selection (triggers your mobile layout to show the main list)
+    try {
+      selectChat?.(null as unknown as number); // if your action is typed (number | null), remove the assertion
+    } catch {
+      // ignore
+    }
+    // and navigate home as a route fallback (no-op if you rely purely on store selection)
+    navigate("/", { replace: true });
+  };
+
   return (
     <div className="relative">
       <header className="h-[5.6rem] px-[1.6rem] bg-zinc-900 border-b border-zinc-800 flex items-center gap-[1.2rem]">
+        {/* Back arrow — only visible on md- (mobile) */}
+        {showBack && (
+          <button
+            onClick={handleBack}
+            className="md:hidden p-[0.6rem] rounded-full hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            aria-label="Back"
+          >
+            <Icon icon="ph:arrow-left" className="w-[2.2rem] h-[2.2rem] text-zinc-200" />
+          </button>
+        )}
+
         <AvatarButton onClick={onOpenProfile} src={avatarSrc} alt={displayName} />
 
         {isSearching ? (

@@ -7,6 +7,10 @@ type Props = {
 
 /** Clickable media mosaic (1–4+, with +N badge on the last tile if more than 4) */
 export default function MediaMosaic({ items, onOpen }: Props) {
+  const WRAP =
+    // take full width on small screens, progressively cap on larger screens
+    "w-full md:max-w-[40rem] lg:max-w-[52rem] xl:max-w-[64rem]";
+
   const count = items.length;
 
   const Tile = ({
@@ -42,40 +46,40 @@ export default function MediaMosaic({ items, onOpen }: Props) {
 
   if (count === 1) {
     return (
-      <div className="w-[min(64rem,72vw)]">
-        <Tile i={0} className="aspect-[16/10]" />
+      <div className={WRAP}>
+        <Tile i={0} className="aspect-video" />
       </div>
     );
   }
 
   if (count === 2) {
     return (
-      <div className="grid grid-cols-2 gap-[0.6rem] w-[min(64rem,72vw)]">
-        <Tile i={0} className="aspect-[1/1]" />
-        <Tile i={1} className="aspect-[1/1]" />
+      <div className={`grid grid-cols-2 gap-[0.6rem] ${WRAP}`}>
+        <Tile i={0} className="aspect-square" />
+        <Tile i={1} className="aspect-square" />
       </div>
     );
   }
 
   if (count === 3) {
     return (
-      <div className="grid grid-cols-2 gap-[0.6rem] w-[min(64rem,72vw)]">
+      <div className={`grid grid-cols-2 gap-[0.6rem] ${WRAP}`}>
         <Tile i={0} className="row-span-2 aspect-[2/3]" />
-        <Tile i={1} className="aspect-[1/1]" />
-        <Tile i={2} className="aspect-[1/1]" />
+        <Tile i={1} className="aspect-square" />
+        <Tile i={2} className="aspect-square" />
       </div>
     );
   }
 
   // 4 or more → 2x2, last tile shows +N if there are extras
   return (
-    <div className="grid grid-cols-2 gap-[0.6rem] w-[min(64rem,72vw)]">
-      <Tile i={0} className="aspect-[1/1]" />
-      <Tile i={1} className="aspect-[1/1]" />
-      <Tile i={2} className="aspect-[1/1]" />
+    <div className={`grid grid-cols-2 gap-[0.6rem] ${WRAP}`}>
+      <Tile i={0} className="aspect-square" />
+      <Tile i={1} className="aspect-square" />
+      <Tile i={2} className="aspect-square" />
       <Tile
         i={3}
-        className="aspect-[1/1]"
+        className="aspect-square"
         showOverlay={items.length > 4}
         overlayText={items.length > 4 ? `+${items.length - 4}` : undefined}
       />
