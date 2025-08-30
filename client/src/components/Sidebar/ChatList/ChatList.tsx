@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import ChatListItem from "./ChatListItem";
 import { useChatsStore } from "../../../store/chats";
 import { useAuthStore } from "../../../store/auth";
+import { useContactsStore } from "../../../store/contacts";
+import { usePeerStore } from "../../../store/peer";
 
 function hhmm(ts?: string | null) {
   if (!ts) return "";
@@ -11,31 +13,59 @@ function hhmm(ts?: string | null) {
 }
 
 export default function ChatList() {
-  const { items, loading, error, fetch, select, selectedId } = useChatsStore();
+  const { 
+    items,
+    loading,
+    error,
+    fetch,
+    select,
+    selectedId,
+    displayNameFor,
+    avatarFor,
+  } = useChatsStore();
+
   const meId = useAuthStore((s) => s.user?.id ?? null);
+
+  // subscribe so we re-render when contacts change
+  const contactsItems = useContactsStore((s) => s.items);
+  const fetchContacts = useContactsStore((s) => s.fetch);
 
   const [openId, setOpenId] = useState<number | null>(null);
   const [contextPos, setContextPos] = useState({ x: 0, y: 0 });
-
+  const peersById = usePeerStore((s) => s.byId);
   useEffect(() => {
-    // guarded inside store (hasLoaded) — safe even if StrictMode double-invokes effects
     fetch();
+    fetchContacts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const list = useMemo(() => items, [items]);
+  const list = useMemo(() => items, [items, contactsItems, peersById]);
 
-  if (loading) return <ul className="flex flex-col"><li className="px-[1.5rem] py-[1.1rem] text-zinc-400">Loading…</li></ul>;
-  if (error)   return <ul className="flex flex-col"><li className="px-[1.5rem] py-[1.1rem] text-red-400">{error}</li></ul>;
-  if (!list.length) return <ul className="flex flex-col"><li className="px-[1.5rem] py-[1.1rem] text-zinc-400">No chats yet.</li></ul>;
+  if (loading)
+    return (
+      <ul className="flex flex-col">
+        <li className="px-[1.5rem] py-[1.1rem] text-zinc-400">Loading…</li>
+      </ul>
+    );
+  if (error)
+    return (
+      <ul className="flex flex-col">
+        <li className="px-[1.5rem] py-[1.1rem] text-red-400">{error}</li>
+      </ul>
+    );
+  if (!list.length)
+    return (
+      <ul className="flex flex-col">
+        <li className="px-[1.5rem] py-[1.1rem] text-zinc-400">No chats yet.</li>
+      </ul>
+    );
 
   return (
     <ul className="flex flex-col">
       {list.map((c) => {
-        const otherUsername =
-          meId && c.user1Id === meId ? c.user2Username : c.user1Username;
+        const name = displayNameFor(c);
+        const avatar = avatarFor(c);
 
-        const avatar = `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(otherUsername || "User")}`;
         const preview = c.lastMessagePreview || "No messages yet";
         const time = hhmm(c.lastMessageAt || c.updatedAt || c.createdAt);
 
@@ -49,7 +79,7 @@ export default function ChatList() {
           <ChatListItem
             key={c.id}
             id={c.id}
-            name={otherUsername}
+            name={name}
             message={preview}
             time={time}
             avatar={avatar}
@@ -62,7 +92,7 @@ export default function ChatList() {
               setContextPos({ x, y });
             }}
             onCloseContextMenu={() => setOpenId(null)}
-            onClick={() => select(c.id)}   // idempotent now
+            onClick={() => select(c.id)}
           />
         );
       })}

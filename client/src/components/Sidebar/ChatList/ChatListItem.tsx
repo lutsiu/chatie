@@ -93,7 +93,7 @@ export default function ChatListItem({
 
       {/* Context Menu */}
       {isMenuOpen && (
-        <ChatContextMenu onClose={onCloseContextMenu} position={menuPosition} />
+        <ChatContextMenu chatId={id} onClose={onCloseContextMenu} position={menuPosition} />
       )}
     </li>
   );

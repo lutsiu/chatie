@@ -2,9 +2,21 @@ import { api } from "./client";
 
 export type Contact = {
   id: number;
-  email: string;
-  firstName: string;
-  lastName: string | null;
+
+  // Best key if your backend provides it:
+  userId?: number | null;
+
+  // Helpful fallbacks:
+  username?: string | null;
+  email?: string | null;
+
+  // Names (any subset is fine; we’ll normalize in the store):
+  firstName?: string | null;
+  lastName?: string | null;
+  displayName?: string | null; // e.g. “Friend”, “Colleague”
+
+  // Optional avatar/photo:
+  avatarUrl?: string | null;
 };
 
 export type CreateContactBody = {
@@ -13,10 +25,17 @@ export type CreateContactBody = {
   lastName?: string;
 };
 
-export type UpdateContactBody = Partial<CreateContactBody>;
+export type UpdateContactBody = Partial<CreateContactBody> & {
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  username?: string | null;
+  userId?: number | null;
+};
 
 export const listContactsApi = async (q?: string) => {
-  const { data } = await api.get<Contact[]>("/api/contacts", { params: q ? { q } : {} });
+  const { data } = await api.get<Contact[]>("/api/contacts", {
+    params: q ? { q } : {},
+  });
   return data;
 };
 

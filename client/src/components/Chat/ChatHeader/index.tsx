@@ -1,4 +1,3 @@
-// src/components/Chat/ChatHeader/index.tsx
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "@iconify/react";
@@ -17,15 +16,15 @@ import {
   useSelectedPeerId,
   useSelectedPeerUsername,
   useSelectedChatId,
-  // ⬇️ if your store exposes the root hook for actions, import it too:
+  useSelectedChat,
   useChatsStore,
 } from "../../../store/chats";
 import { usePeerStore } from "../../../store/peer";
+import { useContactsStore } from "../../../store/contacts";
 
 const initialsAvatar = (seed: string) =>
   `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed || "User")}`;
 
-// Small formatter for "last seen ..."
 function formatLastSeen(iso?: string | null) {
   if (!iso) return "last seen recently";
   const d = new Date(iso);
@@ -64,17 +63,21 @@ export default function ChatHeader({ onOpenProfile }: Props) {
 
   const navigate = useNavigate();
 
-  const chatId = useSelectedChatId();              // primitive
-  const peerId = useSelectedPeerId();              // primitive
-  const peerUsername = useSelectedPeerUsername();  // primitive
+  const chatId = useSelectedChatId();
+  const selectedChat = useSelectedChat();
+  const peerId = useSelectedPeerId();
+  const peerUsername = useSelectedPeerUsername();
 
-  // get the action that selects/deselects a chat (expects number | null)
-  const selectChat = useChatsStore((s) => s.select);
+  // name/avatar providers from chats store
+  const displayNameFor = useChatsStore((s) => s.displayNameFor);
+  const avatarFor = useChatsStore((s) => s.avatarFor);
 
-  // peer profile (may be undefined until fetched)
+  // subscribe so we refresh when contacts/peers land
+  const contactsItems = useContactsStore((s) => s.items);
+  const peersById = usePeerStore((s) => s.byId);
+
+  // peer profile (for last-seen)
   const peerUser = usePeerStore((s) => (peerId ? s.byId[peerId] : undefined));
-
-  // fetch peer profile once per chat id
   useEffect(() => {
     if (peerId) {
       usePeerStore.getState().ensure(peerId).catch(() => {});
@@ -82,38 +85,30 @@ export default function ChatHeader({ onOpenProfile }: Props) {
   }, [peerId]);
 
   const displayName = useMemo(() => {
-    if (!peerId) return "";
+    if (selectedChat) return displayNameFor(selectedChat);
     const full = `${peerUser?.firstName ?? ""} ${peerUser?.lastName ?? ""}`.trim();
     return full || (peerUsername ?? "");
-  }, [peerId, peerUser, peerUsername]);
+  }, [selectedChat, displayNameFor, peerUser, peerUsername, contactsItems, peersById]);
 
   const avatarSrc = useMemo(() => {
-    if (!peerId) return initialsAvatar("User");
+    if (selectedChat) return avatarFor(selectedChat);
     return peerUser?.profilePictureUrl || initialsAvatar(displayName || peerUsername || "User");
-  }, [peerId, peerUser, displayName, peerUsername]);
+  }, [selectedChat, avatarFor, peerUser, displayName, peerUsername, contactsItems, peersById]);
 
-  // compute subtitle with lastLoginAt if present; fallback otherwise
   const subtitle = formatLastSeen(peerUser?.lastLoginAt as string | undefined);
 
-  // show back button on mobile only when a chat is selected
-  const showBack = !!chatId;
-
+  // back button for md- only
   const handleBack = () => {
-    // clear current selection (triggers your mobile layout to show the main list)
-    try {
-      selectChat?.(null as unknown as number); // if your action is typed (number | null), remove the assertion
-    } catch {
-      // ignore
-    }
-    // and navigate home as a route fallback (no-op if you rely purely on store selection)
+    // deselect chat (your layout will show the list again on mobile)
+    useChatsStore.getState().select(null);
     navigate("/", { replace: true });
   };
 
   return (
     <div className="relative">
       <header className="h-[5.6rem] px-[1.6rem] bg-zinc-900 border-b border-zinc-800 flex items-center gap-[1.2rem]">
-        {/* Back arrow — only visible on md- (mobile) */}
-        {showBack && (
+        {/* Back on mobile */}
+        {chatId && (
           <button
             onClick={handleBack}
             className="md:hidden p-[0.6rem] rounded-full hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-purple-500"

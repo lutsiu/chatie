@@ -1,4 +1,3 @@
-// src/store/contacts.ts
 import { create } from "zustand";
 import {
   listContactsApi,
@@ -10,11 +9,41 @@ import {
   type UpdateContactBody,
 } from "../api/contacts";
 
+function keyU(v?: number | null) {
+  return v == null ? null : Number(v);
+}
+
+function keyS(v?: string | null) {
+  return v?.trim().toLowerCase() || null;
+}
+
+function indexContacts(list: Contact[]) {
+  const byUserId: Record<number, Contact> = {};
+  const byUsername: Record<string, Contact> = {};
+  const byEmail: Record<string, Contact> = {};
+
+  for (const c of list) {
+    const u = keyU(c.userId);
+    const un = keyS(c.username);
+    const em = keyS(c.email);
+
+    if (u != null) byUserId[u] = c;
+    if (un) byUsername[un] = c;
+    if (em) byEmail[em] = c;
+  }
+  return { byUserId, byUsername, byEmail };
+}
+
 type ContactsState = {
   items: Contact[];
   loading: boolean;
   saving: boolean;
   error: string | null;
+  hasLoaded: boolean;
+
+  byUserId: Record<number, Contact>;
+  byUsername: Record<string, Contact>;
+  byEmail: Record<string, Contact>;
 
   fetch: (q?: string) => Promise<void>;
   add: (body: CreateContactBody) => Promise<Contact>;
@@ -28,12 +57,22 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
   loading: false,
   saving: false,
   error: null,
+  hasLoaded: false,
+
+  byUserId: {},
+  byUsername: {},
+  byEmail: {},
 
   async fetch(q) {
     set({ loading: true, error: null });
     try {
       const data = await listContactsApi(q);
-      set({ items: data });
+      const idx = indexContacts(data);
+      set({
+        items: data,
+        ...idx,
+        hasLoaded: true,
+      });
     } catch (e: any) {
       set({ error: e?.response?.data?.message ?? "Failed to load contacts" });
     } finally {
@@ -45,7 +84,9 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
     set({ saving: true, error: null });
     try {
       const created = await createContactApi(body);
-      set({ items: [created, ...get().items] });
+      const next = [created, ...get().items];
+      const idx = indexContacts(next);
+      set({ items: next, ...idx });
       return created;
     } catch (e: any) {
       set({ error: e?.response?.data?.message ?? "Failed to add contact" });
@@ -59,7 +100,9 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
     set({ saving: true, error: null });
     try {
       const updated = await updateContactApi(id, body);
-      set({ items: get().items.map((c) => (c.id === id ? updated : c)) });
+      const next = get().items.map((c) => (c.id === id ? updated : c));
+      const idx = indexContacts(next);
+      set({ items: next, ...idx });
       return updated;
     } catch (e: any) {
       set({ error: e?.response?.data?.message ?? "Failed to update contact" });
@@ -73,7 +116,9 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
     set({ saving: true, error: null });
     try {
       await deleteContactApi(id);
-      set({ items: get().items.filter((c) => c.id !== id) });
+      const next = get().items.filter((c) => c.id !== id);
+      const idx = indexContacts(next);
+      set({ items: next, ...idx });
     } catch (e: any) {
       set({ error: e?.response?.data?.message ?? "Failed to delete contact" });
       throw e;
@@ -83,6 +128,15 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
   },
 
   clear() {
-    set({ items: [], error: null, loading: false, saving: false });
+    set({
+      items: [],
+      error: null,
+      loading: false,
+      saving: false,
+      hasLoaded: false,
+      byUserId: {},
+      byUsername: {},
+      byEmail: {},
+    });
   },
 }));

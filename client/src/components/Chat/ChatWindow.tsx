@@ -1,4 +1,3 @@
-// src/components/Chat/ChatWindow.tsx
 import { useEffect, useMemo, useState } from "react";
 
 import MessageList from "./MessageList";
@@ -11,12 +10,14 @@ import {
   useSelectedPeerId,
   useSelectedPeerUsername,
   useSelectedChatId,
+  useSelectedChat,
+  useChatsStore,
 } from "../../store/chats";
 import { usePeerStore } from "../../store/peer";
+import { useContactsStore } from "../../store/contacts";
 import { useMessagesStore } from "../../store/messages";
 import type { Message } from "../../api/messages";
 
-// 👉 your combined socket hook
 import { useChatChannel } from "../../realtime/useChatChannel";
 
 const initialsAvatar = (seed: string) =>
@@ -54,18 +55,25 @@ function formatLastSeen(iso?: string | null) {
 export default function ChatWindow() {
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // stable primitives
+  // primitives
   const chatId = useSelectedChatId();
+  const selectedChat = useSelectedChat();
   const peerId = useSelectedPeerId();
   const peerUsername = useSelectedPeerUsername() ?? "";
 
-  // subscribe to this chat's WS topic (handles created/edited/deleted + pin/unpin)
+  // sockets for this chat
   useChatChannel(chatId);
 
-  // cached peer profile
-  const peerUser = usePeerStore((s) => (peerId ? s.byId[peerId] : undefined));
+  // contact-aware helpers from chats store
+  const displayNameFor = useChatsStore((s) => s.displayNameFor);
+  const avatarFor = useChatsStore((s) => s.avatarFor);
 
-  // ensure peer profile when id changes
+  // subscribe so we re-render when contacts/peers land
+  const contactsItems = useContactsStore((s) => s.items);
+  const peersById = usePeerStore((s) => s.byId);
+
+  // peer profile (for last-seen)
+  const peerUser = usePeerStore((s) => (peerId ? s.byId[peerId] : undefined));
   useEffect(() => {
     if (peerId) usePeerStore.getState().ensure(peerId).catch(() => {});
   }, [peerId]);
@@ -127,6 +135,18 @@ export default function ChatWindow() {
     return () => unsub();
   }, [chatId]);
 
+  // contact-aware display name + avatar (refresh when contacts or peers change)
+  const displayName = useMemo(() => {
+    if (selectedChat) return displayNameFor(selectedChat);
+    const fullName = `${peerUser?.firstName ?? ""} ${peerUser?.lastName ?? ""}`.trim();
+    return fullName || peerUsername;
+  }, [selectedChat, displayNameFor, peerUser, peerUsername, contactsItems, peersById]);
+
+  const avatar = useMemo(() => {
+    if (selectedChat) return avatarFor(selectedChat);
+    return peerUser?.profilePictureUrl || initialsAvatar(displayName || peerUsername);
+  }, [selectedChat, avatarFor, peerUser, displayName, peerUsername, contactsItems, peersById]);
+
   const statusLabel = useMemo(
     () => formatLastSeen((peerUser as any)?.lastLoginAt as string | undefined),
     [peerUser]
@@ -134,9 +154,6 @@ export default function ChatWindow() {
 
   const panelUser = useMemo(() => {
     if (!peerId) return null;
-    const fullName = `${peerUser?.firstName ?? ""} ${peerUser?.lastName ?? ""}`.trim();
-    const displayName = fullName || peerUsername;
-    const avatar = peerUser?.profilePictureUrl || initialsAvatar(displayName || peerUsername);
 
     return {
       name: displayName,
@@ -146,7 +163,7 @@ export default function ChatWindow() {
       media: panelMedia,
       files: panelFiles,
     };
-  }, [peerId, peerUser, peerUsername, panelMedia, panelFiles, statusLabel]);
+  }, [peerId, displayName, peerUsername, statusLabel, avatar, panelMedia, panelFiles]);
 
   return (
     <section className="relative h-full w-full flex flex-col bg-zinc-950">
