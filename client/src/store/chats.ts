@@ -38,7 +38,6 @@ type ChatsState = {
   remove: (id: number) => Promise<void>;
 };
 
-/** Accept nullables to match Contact shape */
 type ContactNameLike = Partial<Pick<Contact, "firstName" | "lastName" | "email" | "displayName">>;
 
 function contactDisplayName(contact?: ContactNameLike): string | undefined {
@@ -138,7 +137,7 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
       const data = await listMyChatsApi();
       set({ items: sortChats(data), loading: false, hasLoaded: true });
 
-      // 🔹 Preload peers so we have emails/profile pics for contact matching
+      // Preload peers so we have emails/profile pics for contact matching
       const otherIds = Array.from(
         new Set(
           data
@@ -171,7 +170,6 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
         hasLoaded: true,
       }));
 
-      // 🔹 Also preload the peer we just opened with
       usePeerStore.getState().ensure(otherUserId).catch(() => {});
       return chat;
     } catch (e: any) {
@@ -198,8 +196,6 @@ export const useChatsStore = create<ChatsState>()((set, get) => ({
     }
   },
 }));
-
-/* ---------- simple selectors ---------- */
 
 export function useSelectedChatId(): number | null {
   return useChatsStore((s) => s.selectedId);

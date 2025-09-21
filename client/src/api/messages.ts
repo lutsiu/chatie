@@ -111,7 +111,7 @@ export const unpinMessageApi = async (chatId: number, messageId: number) => {
   await api.delete(`/api/messages/pin`, { params: { chatId, messageId } });
 };
 
-/* ---------- NEW: upload files to backend → Cloudinary ---------- */
+/*NEW: upload files to backend and Cloudinary */
 
 export async function uploadMessageFilesApi(
   chatId: number,

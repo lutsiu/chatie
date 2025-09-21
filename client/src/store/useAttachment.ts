@@ -1,4 +1,3 @@
-// src/store/useAttachment.ts
 import { create } from "zustand";
 
 export type AttachMode = "document" | "media" | null;

@@ -6,7 +6,7 @@ import { useParams } from "react-router-dom";
 
 export default function HomePage() {
   const chat = useSelectedChat();
-  const { chatId } = useParams();                    // ← read :chatId
+  const { chatId } = useParams();                   
   const select = useChatsStore((s) => s.select);
   const fetch = useChatsStore((s) => s.fetch);
   const hasItems = useChatsStore((s) => s.items.length > 0);

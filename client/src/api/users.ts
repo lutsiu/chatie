@@ -1,4 +1,3 @@
-// src/api/users.ts
 import { api } from "./client";
 
 export type User = {

@@ -16,7 +16,7 @@ type AuthState = {
   logout: () => void;
   refreshTokens: () => Promise<string | null>;
   setAuth: (payload: AuthResponse) => void;
-  setUser: (u: User | null) => void; // <-- add this
+  setUser: (u: User | null) => void; 
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>()(
       setAuth: ({ accessToken, refreshToken, user }) =>
         set({ accessToken, refreshToken, user }),
 
-      setUser: (u) => set({ user: u }), // <-- implement
+      setUser: (u) => set({ user: u }), 
 
       register: async (body) => {
         set({ isLoading: true, error: null });
@@ -74,7 +74,7 @@ export const useAuthStore = create<AuthState>()(
           set({ accessToken: refreshed.accessToken, refreshToken: refreshed.refreshToken, user: refreshed.user });
           return refreshed.accessToken;
         } catch {
-          return null; // client interceptor will handle logout on next 401
+          return null; 
         }
       },
     }),

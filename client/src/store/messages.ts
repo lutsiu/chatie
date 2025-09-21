@@ -142,7 +142,7 @@ export const useMessagesStore = create<State>()((set, get) => ({
         limit: get().pageSize,
         beforeId: oldestId,
       });
-      const asc = [...data].reverse(); // older → newer block
+      const asc = [...data].reverse(); 
 
       set((s) => {
         const [bucket, byChat2] = ensureBucketSafe(s.byChat, chatId);
@@ -157,7 +157,7 @@ export const useMessagesStore = create<State>()((set, get) => ({
         const nextItems = toPrepend.length ? [...toPrepend, ...bucket.items] : bucket.items;
         const updated: ChatBucket = {
           ...bucket,
-          items: nextItems === bucket.items ? [...bucket.items] : nextItems, // new ref either way
+          items: nextItems === bucket.items ? [...bucket.items] : nextItems, 
           seenIds: seen,
           topReached: data.length < get().pageSize,
           loadingMore: false,

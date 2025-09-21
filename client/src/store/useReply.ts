@@ -1,4 +1,3 @@
-// src/store/useReply.ts
 import { create } from "zustand";
 
 /** Base of every reply target. We keep `id` strictly as a number in the store. */

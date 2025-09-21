@@ -1,4 +1,3 @@
-// src/layouts/MainLayout.tsx
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar/Sidebar";
 import SidePanel from "../components/Sidebar/SidePanel";
