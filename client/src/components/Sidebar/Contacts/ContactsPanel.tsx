@@ -1,4 +1,3 @@
-// src/components/Sidebar/Contacts/ContactsPanel.tsx
 import { Icon } from "@iconify/react";
 import { useEffect, useMemo, useState } from "react";
 import SearchBar from "../Search/SearchBar";

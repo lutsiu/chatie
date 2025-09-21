@@ -1,4 +1,3 @@
-// src/components/Chat/PinnedBanner.tsx
 import { useEffect, useMemo } from "react";
 import { Icon } from "@iconify/react";
 import { useSelectedChatId } from "../../store/chats";

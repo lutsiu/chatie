@@ -1,4 +1,3 @@
-// components/Chat/DatePicker/ChatDatePickerModal.tsx
 import { useEffect, useRef, useState } from 'react';
 import { DayPicker } from 'react-day-picker';
 import { startOfDay } from 'date-fns';

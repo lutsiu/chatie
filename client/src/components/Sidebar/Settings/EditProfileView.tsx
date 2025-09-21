@@ -1,4 +1,3 @@
-// src/components/SidePanel/views/EditProfileView.tsx
 import { Icon } from "@iconify/react";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../../store/auth";

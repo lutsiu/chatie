@@ -1,4 +1,3 @@
-// HeaderActions.tsx
 import { Icon } from "@iconify/react";
 import type { Ref } from "react";
 

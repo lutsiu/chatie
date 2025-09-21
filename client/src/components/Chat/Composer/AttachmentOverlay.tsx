@@ -1,4 +1,3 @@
-// src/components/Chat/Composer/AttachmentOverlay.tsx
 import { useEffect, useCallback } from "react";
 import SendFileModal from "../Modals/SendFileModal";
 import SendMediaModal from "../Modals/SendMediaModal";

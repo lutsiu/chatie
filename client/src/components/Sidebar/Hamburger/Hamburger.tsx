@@ -6,14 +6,14 @@ type Props = {
   isSearching: boolean;
   clearSearch: () => void;
   onOpenSettings: () => void;
-  onOpenContacts: () => void;   // ← add
+  onOpenContacts: () => void;   //  add
 };
 
 export default function Hamburger({
   isSearching,
   clearSearch,
   onOpenSettings,
-  onOpenContacts,                // ← add
+  onOpenContacts,                //  add
 }: Props) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -48,7 +48,7 @@ export default function Hamburger({
         <HamburgerMenu
           onClose={() => setShowMenu(false)}
           onOpenSettings={() => { setShowMenu(false); onOpenSettings(); }}
-          onOpenContacts={() => { setShowMenu(false); onOpenContacts(); }} // ← forward
+          onOpenContacts={() => { setShowMenu(false); onOpenContacts(); }} //  forward
         />
       )}
     </div>

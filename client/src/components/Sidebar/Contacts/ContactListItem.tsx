@@ -1,4 +1,3 @@
-// src/components/Sidebar/Contacts/ContactListItem.tsx
 type Props = {
   name: string;
   avatar: string | null | undefined;

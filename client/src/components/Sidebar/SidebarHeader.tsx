@@ -8,7 +8,7 @@ type Props = {
   setIsSearching: (v: boolean) => void;
   clearSearch: () => void;
   onOpenSettings: () => void;
-  onOpenContacts: () => void;   // ← add
+  onOpenContacts: () => void;   //  add
 };
 
 export default function SidebarHeader({
@@ -18,7 +18,7 @@ export default function SidebarHeader({
   setIsSearching,
   clearSearch,
   onOpenSettings,
-  onOpenContacts,                // ← add
+  onOpenContacts,                //  add
 }: Props) {
   return (
     <header className="pt-[1rem] px-[2.5rem]">
@@ -27,7 +27,7 @@ export default function SidebarHeader({
           isSearching={isSearching}
           clearSearch={clearSearch}
           onOpenSettings={onOpenSettings}
-          onOpenContacts={onOpenContacts}   // ← pass to hamburger
+          onOpenContacts={onOpenContacts}   //  pass to hamburger
         />
         <SearchBar
           query={query}

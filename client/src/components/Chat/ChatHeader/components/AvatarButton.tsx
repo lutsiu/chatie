@@ -1,4 +1,3 @@
-// src/components/Chat/Header/components/AvatarButton.tsx
 type Props = { onClick: () => void; src?: string; alt?: string };
 
 export function AvatarButton({
