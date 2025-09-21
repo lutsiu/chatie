@@ -1,4 +1,3 @@
-// src/main/java/com/example/chatie/Chatie/controller/MessageController.java
 package com.example.chatie.Chatie.controller;
 
 import com.example.chatie.Chatie.dto.message.AttachmentInputDTO;

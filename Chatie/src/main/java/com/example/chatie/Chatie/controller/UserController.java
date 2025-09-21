@@ -1,4 +1,3 @@
-// src/main/java/com/example/chatie/Chatie/controller/UserController.java
 package com.example.chatie.Chatie.controller;
 
 import com.example.chatie.Chatie.dto.user.UserDTO;

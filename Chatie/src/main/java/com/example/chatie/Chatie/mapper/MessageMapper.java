@@ -1,4 +1,3 @@
-// src/main/java/com/example/chatie/Chatie/mapper/MessageMapper.java
 package com.example.chatie.Chatie.mapper;
 
 import com.example.chatie.Chatie.dto.message.*;
