@@ -2,6 +2,7 @@ package com.example.chatie.Chatie.controller;
 
 import com.example.chatie.Chatie.dto.auth.AuthResponse;
 import com.example.chatie.Chatie.dto.auth.LoginRequest;
+import com.example.chatie.Chatie.dto.auth.RefreshRequest;
 import com.example.chatie.Chatie.dto.auth.RegisterRequest;
 import com.example.chatie.Chatie.service.auth.AuthService;
 import jakarta.validation.Valid;
@@ -24,5 +25,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest req) {
         return ResponseEntity.ok(authService.login(req));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest req) {
+        return ResponseEntity.ok(authService.refresh(req.getRefreshToken()));
     }
 }

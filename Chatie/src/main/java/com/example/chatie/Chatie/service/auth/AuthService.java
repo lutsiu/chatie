@@ -7,4 +7,5 @@ import com.example.chatie.Chatie.dto.auth.RegisterRequest;
 public interface AuthService {
     AuthResponse register(RegisterRequest req);
     AuthResponse login(LoginRequest req);
+    AuthResponse refresh(String refreshToken);
 }

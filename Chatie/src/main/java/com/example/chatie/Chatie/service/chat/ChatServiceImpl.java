@@ -40,7 +40,6 @@ public class ChatServiceImpl implements ChatService {
             throw new IllegalArgumentException("A chat requires two distinct users");
         }
 
-        // Normalize order: smaller ID -> user1
         Long first = Math.min(meId, otherUserId);
         Long second = Math.max(meId, otherUserId);
 

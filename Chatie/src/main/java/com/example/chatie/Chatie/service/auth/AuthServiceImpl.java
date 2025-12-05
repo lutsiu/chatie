@@ -11,6 +11,7 @@ import com.example.chatie.Chatie.mapper.UserMapper;
 import com.example.chatie.Chatie.repository.UserRepository;
 import com.example.chatie.Chatie.security.JwtService;
 import com.example.chatie.Chatie.service.user.UserService;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -59,9 +60,6 @@ public class AuthServiceImpl implements AuthService {
                 : userRepository.findByUsernameIgnoreCase(id))
                 .orElseThrow(() -> new NotFoundException("Invalid credentials"));
 
-//        if (!user.isActive() || user.getDeletedAt() != null) {
-//            throw new NotFoundException("Account disabled");
-//        }
         if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
             throw new NotFoundException("Invalid credentials");
         }
@@ -77,5 +75,48 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(refresh)
                 .user(UserMapper.toDTO(user))
                 .build();
+    }
+
+    public AuthResponse refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new NotFoundException("Invalid refresh token");
+        }
+
+        try {
+            // 1. Check token is a valid refresh token
+            if (!jwt.isRefreshToken(refreshToken)) {
+                throw new NotFoundException("Invalid refresh token");
+            }
+            if (jwt.isExpired(refreshToken)) {
+                throw new NotFoundException("Refresh token expired");
+            }
+
+            // 2. Extract user id from subject
+            Long userId = jwt.extractUserId(refreshToken);
+
+            // 3. Load user from DB
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new NotFoundException("User not found"));
+
+            // (optional) extra safety: tie token to this user
+            if (!jwt.isTokenValid(refreshToken, user)) {
+                throw new NotFoundException("Invalid refresh token");
+            }
+
+            // 4. Generate new tokens
+            String newAccess = jwt.generateAccessToken(user);
+            String newRefresh = jwt.generateRefreshToken(user); // rotate refresh
+
+            // 5. Return new AuthResponse
+            return AuthResponse.builder()
+                    .accessToken(newAccess)
+                    .refreshToken(newRefresh)
+                    .user(UserMapper.toDTO(user))
+                    .build();
+
+        } catch (JwtException ex) {
+            // parse() / signature / format errors end up here
+            throw new NotFoundException("Invalid refresh token");
+        }
     }
 }

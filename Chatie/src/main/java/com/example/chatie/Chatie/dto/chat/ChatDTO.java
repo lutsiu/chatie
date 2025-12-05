@@ -21,7 +21,6 @@ public class ChatDTO {
     private LocalDateTime lastMessageAt;
     private String lastMessagePreview;
 
-    // read markers (client can compute unread using lastMessageAt)
     private LocalDateTime user1LastReadAt;
     private LocalDateTime user2LastReadAt;
 }

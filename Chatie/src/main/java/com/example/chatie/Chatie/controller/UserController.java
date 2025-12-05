@@ -8,6 +8,7 @@ import com.example.chatie.Chatie.service.media.AvatarServiceImpl;
 import com.example.chatie.Chatie.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

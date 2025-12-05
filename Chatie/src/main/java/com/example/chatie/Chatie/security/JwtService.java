@@ -55,4 +55,36 @@ public class JwtService {
     public Jws<Claims> parse(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
     }
+
+    public Long extractUserId(String token) {
+        Claims claims = parse(token).getBody();
+        String sub = claims.getSubject();
+        return Long.parseLong(sub);
+    }
+
+    public boolean isRefreshToken(String token) {
+        Claims claims = parse(token).getBody();
+        String type = claims.get("type", String.class);
+        return "refresh".equals(type);
+    }
+
+    public boolean isExpired(String token) {
+        Claims claims = parse(token).getBody();
+        Date exp = claims.getExpiration();
+        return exp.before(new Date());
+    }
+
+    public boolean isTokenValid(String token, User user) {
+        try {
+            Claims claims = parse(token).getBody();
+            String subject = claims.getSubject();
+            Date exp = claims.getExpiration();
+
+            return subject.equals(String.valueOf(user.getId()))
+                    && exp.after(new Date());
+        } catch (JwtException ex) {
+            return false;
+        }
+    }
 }
+
