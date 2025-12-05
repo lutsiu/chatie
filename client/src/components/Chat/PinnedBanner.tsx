@@ -59,7 +59,7 @@ export default function PinnedBanner() {
   if (!chatId || loading || !top) return null;
 
   const preview = toBannerPreview(top);
-
+ 
   const handleGoTo = () => scrollTo(top.id);
   const handleUnpin = async () => {
     await unpin(chatId, top.id);

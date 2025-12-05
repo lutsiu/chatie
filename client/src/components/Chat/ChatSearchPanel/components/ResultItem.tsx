@@ -1,3 +1,4 @@
+import { useMessageRegistry } from "../../../../store/useMessageRegistry";
 import type { Result } from "../types";
 import { highlight } from "../utils/highlight";
 
@@ -9,8 +10,10 @@ type Props = {
 };
 
 export function ResultItem({ r, q, setQuery, onCloseSearch }: Props) {
+  const {scrollTo} = useMessageRegistry((state) => state);
   const handleActivate = () => {
     r.onClick?.();      
+    scrollTo(r.id);
     onCloseSearch();   
     setQuery("");      
   };

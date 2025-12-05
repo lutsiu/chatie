@@ -8,7 +8,7 @@ import FileAttachment from "./components/FileAttachment";
 import MetaBar from "./components/MetaBar";
 import { useSelectedChatId } from "../../../store/chats";
 import { useMessagesStore } from "../../../store/messages";
-import { useReply } from "../../../store/useReply";
+import { useReply, type ReplyTarget } from "../../../store/useReply";
 import { useEditMessage } from "../../../store/useEditMessage";
 
 type Media = { url: string; type: "image" | "video"; id?: string | number };
@@ -42,7 +42,7 @@ export default function MessageBubble({
   onPin,
   onDelete,
 }: Props) {
-  const { register, scrollTo } = useMessageRegistry();
+  const { scrollTo } = useMessageRegistry();
   const { menuOpen, menuPos, handleContext, closeMenu } = useContextMenu();
   const { openViewer, triggerReply, triggerPin, copyAvailable } = useMessageActions({
     id,
@@ -89,7 +89,7 @@ export default function MessageBubble({
 
   return (
     <div
-      ref={register(id)}
+      data-message-id={id}
       className={`w-full flex ${isOwn ? "justify-end" : "justify-start"} px-[1.6rem]`}
       onContextMenu={handleContext}
     >

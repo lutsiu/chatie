@@ -8,7 +8,6 @@ import { useMessagesStore } from "../../store/messages";
 import type { Message } from "../../api/messages";
 import type { ReplyTarget } from "../../store/useReply";
 
-
 function hhmm(iso?: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -17,9 +16,11 @@ function hhmm(iso?: string | null) {
 }
 
 function sameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() &&
-         a.getMonth() === b.getMonth() &&
-         a.getDate() === b.getDate();
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
 function dayLabel(d: Date) {
@@ -29,14 +30,15 @@ function dayLabel(d: Date) {
 
   if (sameDay(d, today)) return "Today";
   if (sameDay(d, yesterday)) return "Yesterday";
-  return d.toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" });
+  return d.toLocaleDateString([], {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function isVideoMime(m?: string | null) {
   return !!m && m.startsWith("video");
-}
-function isImageMime(m?: string | null) {
-  return !!m && m.startsWith("image");
 }
 
 export default function MessageList() {
@@ -47,10 +49,14 @@ export default function MessageList() {
   const loadMore        = useMessagesStore((s) => s.loadMore);
 
   // bucket selectors (keep each selector focused to avoid rerenders)
-  const items       = useMessagesStore((s) => (chatId ? s.byChat[chatId]?.items : undefined)) ?? [];
-  const loadingMore = useMessagesStore((s) => (chatId ? s.byChat[chatId]?.loadingMore : false)) ?? false;
-  const loadingFirst= useMessagesStore((s) => (chatId ? s.byChat[chatId]?.loadingFirst : false)) ?? false;
-  const topReached  = useMessagesStore((s) => (chatId ? s.byChat[chatId]?.topReached : false)) ?? false;
+  const items       =
+    useMessagesStore((s) => (chatId ? s.byChat[chatId]?.items : undefined)) ?? [];
+  const loadingMore =
+    useMessagesStore((s) => (chatId ? s.byChat[chatId]?.loadingMore : false)) ?? false;
+  const loadingFirst=
+    useMessagesStore((s) => (chatId ? s.byChat[chatId]?.loadingFirst : false)) ?? false;
+  const topReached  =
+    useMessagesStore((s) => (chatId ? s.byChat[chatId]?.topReached : false)) ?? false;
 
   // fetch first page when chat changes
   useEffect(() => {
@@ -63,8 +69,8 @@ export default function MessageList() {
 
   // After new messages arrive (or initial load), stick to bottom if user was there
   useEffect(() => {
-    if (!scrollerRef.current) return;
     const el = scrollerRef.current;
+    if (!el) return;
     if (loadingMore) return; // don't jump during "load older"
 
     if (atBottomRef.current) {
@@ -76,7 +82,8 @@ export default function MessageList() {
     const el = scrollerRef.current;
     if (!el || !chatId) return;
 
-    const threshold = 64; // px
+    const threshold = 64; // px from top
+
     // Top → load older
     if (!loadingMore && !topReached && el.scrollTop <= threshold) {
       const prevHeight = el.scrollHeight;
@@ -86,7 +93,7 @@ export default function MessageList() {
       el.scrollTop = el.scrollTop + diff;
     }
 
-    // Track bottom stickiness
+    // Track "stick to bottom"
     const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
     atBottomRef.current = distanceFromBottom < 24;
   }, [chatId, loadMore, loadingMore, topReached]);
@@ -95,38 +102,38 @@ export default function MessageList() {
   const groups = useMemo(() => {
     type UiMsg = {
       key: string;
-      dateLabel?: string; // only for separators
+      dateLabel?: string;
       bubble?: React.ReactNode;
     };
+
     const out: UiMsg[] = [];
     let lastLabel: string | null = null;
 
     const toReply = (m: Message): ReplyTarget | undefined => {
       if (m.replyToId == null) return undefined;
-      // We only have replyToPreview in the payload; author name can be improved later
       return {
         id: m.replyToId,
-        author: "Reply", // could be peer/me with more data later
+        author: "Reply",
         kind: "text",
         text: m.replyToPreview ?? "",
       };
     };
 
     items.forEach((m) => {
-      // date separator
       const created = new Date(m.createdAt);
       const label = dayLabel(created);
       if (label !== lastLabel) {
-        out.push({ key: `sep-${label}-${created.getTime()}`, dateLabel: label });
+        out.push({
+          key: `sep-${label}-${created.getTime()}`,
+          dateLabel: label,
+        });
         lastLabel = label;
       }
 
       const isOwn = meId != null && m.senderId === meId;
+      const status =
+        (m as any)._localStatus === "sending" ? ("sent" as const) : undefined;
 
-      // status (basic): optimistic → "sent", else undefined
-      const status = (m as any)._localStatus === "sending" ? ("sent" as const) : undefined;
-
-      // map attachments → media/file for your bubble
       let media: { url: string; type: "image" | "video" }[] | undefined;
       let file:
         | { url: string; name: string; size: number; mime?: string }
@@ -157,17 +164,14 @@ export default function MessageList() {
         }
       }
 
-      // deleted message placeholder
       const text =
-        m.deletedAt != null
-          ? "Message deleted"
-          : m.content ?? undefined;
+        m.deletedAt != null ? "Message deleted" : m.content ?? undefined;
 
       out.push({
         key: `msg-${m.id}`,
         bubble: (
           <MessageBubble
-          key={m.id}
+            key={m.id}
             id={m.id}
             author={isOwn ? "You" : m.senderUsername}
             text={text}
@@ -195,7 +199,7 @@ export default function MessageList() {
 
   return (
     <div
-      ref={scrollerRef}
+      ref={scrollerRef}         
       onScroll={onScroll}
       className="flex-1 overflow-y-auto"
     >
