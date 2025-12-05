@@ -14,7 +14,6 @@ import {
   useChatsStore,
 } from "../../store/chats";
 import { usePeerStore } from "../../store/peer";
-import { useContactsStore } from "../../store/contacts";
 import { useMessagesStore } from "../../store/messages";
 import type { Message } from "../../api/messages";
 
@@ -68,9 +67,6 @@ export default function ChatWindow() {
   const displayNameFor = useChatsStore((s) => s.displayNameFor);
   const avatarFor = useChatsStore((s) => s.avatarFor);
 
-  // subscribe so we re-render when contacts/peers land
-  const contactsItems = useContactsStore((s) => s.items);
-  const peersById = usePeerStore((s) => s.byId);
 
   // peer profile (for last-seen)
   const peerUser = usePeerStore((s) => (peerId ? s.byId[peerId] : undefined));
@@ -140,12 +136,12 @@ export default function ChatWindow() {
     if (selectedChat) return displayNameFor(selectedChat);
     const fullName = `${peerUser?.firstName ?? ""} ${peerUser?.lastName ?? ""}`.trim();
     return fullName || peerUsername;
-  }, [selectedChat, displayNameFor, peerUser, peerUsername, contactsItems, peersById]);
+  }, [selectedChat, displayNameFor, peerUser, peerUsername, ]);
 
   const avatar = useMemo(() => {
     if (selectedChat) return avatarFor(selectedChat);
     return peerUser?.profilePictureUrl || initialsAvatar(displayName || peerUsername);
-  }, [selectedChat, avatarFor, peerUser, displayName, peerUsername, contactsItems, peersById]);
+  }, [selectedChat, avatarFor, peerUser, displayName, peerUsername]);
 
   const statusLabel = useMemo(
     () => formatLastSeen((peerUser as any)?.lastLoginAt as string | undefined),

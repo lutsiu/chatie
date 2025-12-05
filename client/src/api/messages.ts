@@ -1,4 +1,3 @@
-// src/api/messages.ts
 import { api } from "./client";
 
 /* ---------- Types (match backend DTOs) ---------- */
@@ -84,10 +83,7 @@ export const listMessagesApi = async (
   return data;
 };
 
-export const createMessageApi = async (body: CreateMessageBody) => {
-  const { data } = await api.post<Message>("/api/messages", body);
-  return data;
-};
+
 
 export const editMessageApi = async (id: number, body: EditMessageBody) => {
   const { data } = await api.patch<Message>(`/api/messages/${id}`, body);
@@ -111,7 +107,10 @@ export const unpinMessageApi = async (chatId: number, messageId: number) => {
   await api.delete(`/api/messages/pin`, { params: { chatId, messageId } });
 };
 
-/*NEW: upload files to backend and Cloudinary */
+export const createMessageApi = async (body: CreateMessageBody) => {
+  const { data } = await api.post<Message>("/api/messages", body);
+  return data;
+};
 
 export async function uploadMessageFilesApi(
   chatId: number,

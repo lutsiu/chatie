@@ -14,6 +14,7 @@ export const useMessageRegistry = create<State>(() => ({
   },
   scrollTo: (id) => {
     const el = nodes.get(id);
+    console.log(el);
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     el.classList.add("ring-2", "ring-purple-500", "ring-offset-2", "ring-offset-zinc-900");

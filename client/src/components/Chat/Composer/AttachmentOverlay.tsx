@@ -13,7 +13,7 @@ export default function AttachmentOverlay() {
   const meId = useAuthStore((s) => s.user?.id ?? null);
   const send = useMessagesStore((s) => s.send);
 
-  // lock scroll + ESC
+  // lock scroll + ESC   
   useEffect(() => {
     if (!isOpen) return;
     const prev = document.body.style.overflow;

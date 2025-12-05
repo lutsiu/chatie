@@ -1,4 +1,3 @@
-import { useChatHeader } from "../../ChatHeader/hooks/useChatHeader";
 import type { Result } from "../types";
 import { highlight } from "../utils/highlight";
 
@@ -6,19 +5,16 @@ type Props = {
   r: Result;
   q: string;
   setQuery: (q: string) => void;
+  onCloseSearch: () => void;
 };
 
-export function ResultItem({ r, q, setQuery }: Props) {
-  
-  const {closeSearch} = useChatHeader();
-  
+export function ResultItem({ r, q, setQuery, onCloseSearch }: Props) {
   const handleActivate = () => {
-    r.onClick?.();
-    closeSearch();
-    setQuery("");
+    r.onClick?.();      
+    onCloseSearch();   
+    setQuery("");      
   };
 
-  
   return (
     <li
       className="flex items-start gap-[1.2rem] px-[1.2rem] py-[1.2rem] hover:bg-zinc-800/70 cursor-pointer"

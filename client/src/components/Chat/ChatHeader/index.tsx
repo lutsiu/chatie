@@ -135,7 +135,7 @@ export default function ChatHeader({ onOpenProfile }: Props) {
         />
       </header>
 
-      {isSearching && <ChatSearchPanel setQuery={setQuery} query={query} />}
+      {isSearching && <ChatSearchPanel setQuery={setQuery} query={query} onCloseSearch={closeSearch}/>}
       {openMenu && <ChatHeaderMenu onClose={() => setOpenMenu(false)} />}
       <ChatDatePickerModal
         open={openCalendar}

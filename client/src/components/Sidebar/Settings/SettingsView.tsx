@@ -1,6 +1,7 @@
 import { Icon } from "@iconify/react";
 import { useSidePanelStore } from "../../../store/useSidePanelStore";
 import { useAuthStore } from "../../../store/auth";
+import { useNavigate } from "react-router-dom";
 
 type Props = { onBack: () => void; onClose: () => void };
 
@@ -14,12 +15,20 @@ const AVATAR_FALLBACK =
 export default function SettingsView({ onBack }: Props) {
   const open = useSidePanelStore((s) => s.open);
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
 
   const displayName =
     (user?.firstName || user?.lastName)
       ? `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim()
       : user?.username ?? "User";
+
   const avatar = user?.profilePictureUrl || AVATAR_FALLBACK;
+
+  const handleLogout = () => {
+    logout();                  // clear auth in Zustand (+ localStorage)
+    navigate("/auth/login");   // redirect to login page
+  };
 
   return (
     <div className="flex flex-col h-full bg-zinc-900 text-white">
@@ -31,6 +40,7 @@ export default function SettingsView({ onBack }: Props) {
           </button>
           <h2 className="text-[1.8rem] font-semibold">Settings</h2>
         </div>
+
         <div className="flex gap-[1.2rem]">
           <button onClick={() => open("editProfile")}>
             <Icon
@@ -38,10 +48,13 @@ export default function SettingsView({ onBack }: Props) {
               className="w-[2.4rem] h-[2.4rem] cursor-pointer hover:text-purple-400"
             />
           </button>
-          <Icon
-            icon="solar:menu-dots-bold"
-            className="w-[2.4rem] h-[2.4rem] cursor-pointer hover:text-purple-400"
-          />
+
+          <button onClick={handleLogout}>
+            <Icon
+              icon="solar:logout-linear"
+              className="w-[2.4rem] h-[2.4rem] cursor-pointer hover:text-purple-400"
+            />
+          </button>
         </div>
       </div>
 
@@ -61,7 +74,7 @@ export default function SettingsView({ onBack }: Props) {
 
       {/* Details */}
       <div className="flex flex-col p-[2.4rem] gap-[2.0rem]">
-        {/* Email (instead of phone) */}
+        {/* Email */}
         <div className="flex items-center gap-[1.6rem]">
           <Icon icon="mdi:email-outline" className="w-[2.4rem] h-[2.4rem] text-zinc-400" />
           <div>
@@ -81,10 +94,7 @@ export default function SettingsView({ onBack }: Props) {
 
         {/* Bio */}
         <div className="flex items-center gap-[1.6rem]">
-          <Icon
-            icon="mdi:information-outline"
-            className="w-[2.4rem] h-[2.4rem] text-zinc-400"
-          />
+          <Icon icon="mdi:information-outline" className="w-[2.4rem] h-[2.4rem] text-zinc-400" />
           <div>
             <p className="text-[1.6rem] text-white">{user?.about ?? "No bio yet"}</p>
             <p className="text-[1.3rem] text-zinc-400">Bio</p>

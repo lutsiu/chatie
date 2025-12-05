@@ -8,7 +8,6 @@ import { useMessagesStore } from "../../store/messages";
 import type { Message } from "../../api/messages";
 import type { ReplyTarget } from "../../store/useReply";
 
-/* ---------- helpers ---------- */
 
 function hhmm(iso?: string | null) {
   if (!iso) return "";
@@ -39,8 +38,6 @@ function isVideoMime(m?: string | null) {
 function isImageMime(m?: string | null) {
   return !!m && m.startsWith("image");
 }
-
-/* ---------- component ---------- */
 
 export default function MessageList() {
   const chatId = useSelectedChatId();
@@ -170,6 +167,7 @@ export default function MessageList() {
         key: `msg-${m.id}`,
         bubble: (
           <MessageBubble
+          key={m.id}
             id={m.id}
             author={isOwn ? "You" : m.senderUsername}
             text={text}

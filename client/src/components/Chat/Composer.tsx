@@ -16,7 +16,7 @@ export default function Composer() {
   const chatId = useSelectedChatId();
   const meId = useAuthStore((s) => s.user?.id ?? null);
   const send = useMessagesStore((s) => s.send); // <- use send
-
+  
   const onSend = useCallback(async () => {
     const text = value.trim();
     if (!text || !chatId || !meId) return;

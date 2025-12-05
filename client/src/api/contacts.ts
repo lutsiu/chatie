@@ -3,17 +3,14 @@ import { api } from "./client";
 export type Contact = {
   id: number;
 
-  // Best key if your backend provides it:
   userId?: number | null;
 
-  // Helpful fallbacks:
   username?: string | null;
   email?: string | null;
 
-  // Names (any subset is fine; we’ll normalize in the store):
   firstName?: string | null;
   lastName?: string | null;
-  displayName?: string | null; // e.g. “Friend”, “Colleague”
+  displayName?: string | null; 
 
   // Optional avatar/photo:
   avatarUrl?: string | null;

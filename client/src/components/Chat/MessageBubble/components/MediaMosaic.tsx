@@ -9,7 +9,7 @@ type Props = {
 export default function MediaMosaic({ items, onOpen }: Props) {
   const WRAP =
     // take full width on small screens, progressively cap on larger screens
-    "w-full md:max-w-[40rem] lg:max-w-[52rem] xl:max-w-[64rem]";
+    "w-full xl:min-w-[64rem] md:min-w-[40rem] lg:min-w-[52rem] md:max-w-[40rem] lg:max-w-[52rem] xl:max-w-[64rem]";
 
   const count = items.length;
 

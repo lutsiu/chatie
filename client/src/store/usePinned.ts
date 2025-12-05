@@ -1,4 +1,3 @@
-// src/store/usePinned.ts
 import { create } from "zustand";
 
 /** What can be shown in the pinned banner. */

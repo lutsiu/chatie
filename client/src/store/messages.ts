@@ -13,9 +13,6 @@ import {
 } from "../api/messages";
 import { useAuthStore } from "./auth";
 
-/* Keep messages in ASC (oldest → newest) inside each chat bucket.
-   Backend returns DESC; we reverse on insert to maintain ASC.  */
-
 type ChatBucket = {
   items: MessageLocal[];   // ASC order
   loadingFirst: boolean;
@@ -23,7 +20,7 @@ type ChatBucket = {
   error: string | null;
   topReached: boolean;     // true when there are no older messages left
   initialized: boolean;    // first page fetched at least once
-  /** For dedupe when realtime arrives. */
+
   seenIds: Set<number>;
 };
 

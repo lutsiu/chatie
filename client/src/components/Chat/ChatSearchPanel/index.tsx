@@ -6,7 +6,11 @@ import { searchMessagesApi, type Message } from "../../../api/messages";
 import { useSelectedChatId } from "../../../store/chats";
 import { useMessageRegistry } from "../../../store/useMessageRegistry";
 
-export type Props = { query: string; setQuery: (q: string) => void; };
+export type Props = {
+  query: string;
+  setQuery: (q: string) => void;
+  onCloseSearch: () => void;      
+};
 
 const hhmm = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -22,7 +26,7 @@ const previewOf = (m: Message) => {
   return "[Message]";
 };
 
-export default function ChatSearchPanel({ query, setQuery }: Props) {
+export default function ChatSearchPanel({ query, setQuery, onCloseSearch }: Props) {
   const chatId = useSelectedChatId();
   const { scrollTo } = useMessageRegistry();
 
@@ -53,10 +57,12 @@ export default function ChatSearchPanel({ query, setQuery }: Props) {
       }
     }, 200);
 
-    return () => { cancelled = true; clearTimeout(t); };
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
   }, [chatId, q]);
 
-  // ✅ Include avatar and date to satisfy Result
   const results = useMemo<Result[]>(() => {
     if (!q || !chatId) return [];
     return items.map((m) => ({
@@ -64,9 +70,9 @@ export default function ChatSearchPanel({ query, setQuery }: Props) {
       name: m.senderUsername,
       text: previewOf(m),
       time: hhmm(m.createdAt),
-      date: m.createdAt,                              // <-- add
-      avatar: initialsAvatar(m.senderUsername || ""), // <-- add
-      onClick: () => scrollTo(m.id),
+      date: new Date(m.createdAt).toLocaleDateString(),  
+      avatar: initialsAvatar(m.senderUsername || ""),
+      onClick: () => scrollTo(m.id),                     
     }));
   }, [items, q, chatId, scrollTo]);
 
@@ -76,8 +82,18 @@ export default function ChatSearchPanel({ query, setQuery }: Props) {
     <div className="absolute left-0 right-0 top-[5.6rem] z-30">
       {loading && <div className="px-4 py-3 text-zinc-400">Searching…</div>}
       {error && <div className="px-4 py-3 text-red-400">{error}</div>}
-      {!loading && !error && (results.length === 0 ? <EmptyState q={q} /> : <ResultsList setQuery={setQuery}
-         results={results} q={q} />)}
+      {!loading && !error && (
+        results.length === 0 ? (
+          <EmptyState q={q} />
+        ) : (
+          <ResultsList
+            results={results}
+            q={q}
+            setQuery={setQuery}
+            onCloseSearch={onCloseSearch}  
+          />
+        )
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
 import SearchListItem from "./SearchListItem";
 import { searchUsersApi, type User } from "../../../api/users";
@@ -8,7 +9,7 @@ const initialsAvatar = (seed: string) =>
   `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(seed || "User")}`;
 
 type Props = {
-  query?: string;            // <- make optional
+  query?: string;            
   onPicked?: () => void;
 };
 
@@ -20,11 +21,9 @@ export default function SearchList({ query = "", onPicked }: Props) {
   const meId = useAuthStore((s) => s.user?.id ?? null);
   const openWith = useChatsStore((s) => s.openWith);
 
-  // Use a safe, trimmed query everywhere
   const q = query.trim();
   console.log(q);
 
-  // debounced search
   useEffect(() => {
     if (q.length < 2) {
       setItems([]);

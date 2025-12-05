@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { loginApi, refreshApi, type AuthResponse, type LoginBody } from "../api/auth";
-import { registerApi, type RegisterBody, type User } from "../api/users";
+import { loginApi, refreshApi, registerApi, type AuthResponse, type LoginBody, type RegisterBody } from "../api/auth";
+import type { User } from "../api/users";
 
 type AuthState = {
   accessToken: string | null;
@@ -10,13 +10,12 @@ type AuthState = {
   isLoading: boolean;
   error: string | null;
 
-  // actions
   register: (body: RegisterBody) => Promise<void>;
   login: (body: LoginBody) => Promise<void>;
   logout: () => void;
   refreshTokens: () => Promise<string | null>;
   setAuth: (payload: AuthResponse) => void;
-  setUser: (u: User | null) => void; 
+  setUser: (u: User | null) => void;
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -36,9 +35,12 @@ export const useAuthStore = create<AuthState>()(
       register: async (body) => {
         set({ isLoading: true, error: null });
         try {
-          const created = await registerApi(body);
-          const auth = await loginApi({ identifier: created.username, password: body.password });
-          set({ accessToken: auth.accessToken, refreshToken: auth.refreshToken, user: auth.user });
+          const auth = await registerApi(body); // /auth/register → AuthResponse
+          set({
+            accessToken: auth.accessToken,
+            refreshToken: auth.refreshToken,
+            user: auth.user,
+          });
         } catch (e: any) {
           const msg = e?.response?.data?.message || e?.message || "Registration failed";
           set({ error: msg });
