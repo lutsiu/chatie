@@ -8,7 +8,8 @@ import FileAttachment from "./components/FileAttachment";
 import MetaBar from "./components/MetaBar";
 import { useSelectedChatId } from "../../../store/chats";
 import { useMessagesStore } from "../../../store/messages";
-import type { ReplyTarget } from "../../../store/useReply";
+import { useReply } from "../../../store/useReply";
+import { useEditMessage } from "../../../store/useEditMessage";
 
 type Media = { url: string; type: "image" | "video"; id?: string | number };
 type FileItem = { url: string; name: string; size: number; mime?: string };
@@ -52,6 +53,9 @@ export default function MessageBubble({
     onPin,
   });
 
+  const { start: startEdit } = useEditMessage();
+  const { clear: clearReply } = useReply();
+
   // --- delete wiring (store + chat id) ---
   const chatId = useSelectedChatId();
   const remove = useMessagesStore((s) => s.remove);
@@ -66,6 +70,13 @@ export default function MessageBubble({
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleEdit = () => {
+    if (!text) return;
+    if (!isOwn) return;
+    clearReply();        
+    startEdit(Number(id), text);
   };
 
   const base =
@@ -137,6 +148,7 @@ export default function MessageBubble({
           }
           onPin={onPin ?? triggerPin}
           onDelete={onDelete ?? handleDelete}
+          onEdit={isOwn ? handleEdit : undefined}
         />
       )}
     </div>

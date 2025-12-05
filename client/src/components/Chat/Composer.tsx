@@ -1,10 +1,12 @@
 import { Icon } from "@iconify/react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect  } from "react";
 import AttachmentMenu from "./Composer/AttachmentMenu";
 import AttachmentOverlay from "./Composer/AttachmentOverlay";
 import ReplyBanner from "./Composer/ReplyBanner";
+import EditBanner from "./Composer/EditBanner";    
 import { useReply } from "../../store/useReply";
 import { useSelectedChatId } from "../../store/chats";
+import { useEditMessage } from "../../store/useEditMessage"; 
 import { useAuthStore } from "../../store/auth";
 import { useMessagesStore } from "../../store/messages";
 
@@ -13,14 +15,25 @@ export default function Composer() {
   const [showMenu, setShowMenu] = useState(false);
 
   const { target, clear } = useReply();
+  const { target: editTarget, clear: clearEdit } = useEditMessage();
   const chatId = useSelectedChatId();
   const meId = useAuthStore((s) => s.user?.id ?? null);
-  const send = useMessagesStore((s) => s.send); // <- use send
-  
+  const send = useMessagesStore((s) => s.send); 
+  const edit = useMessagesStore((s) => s.edit);     
+
   const onSend = useCallback(async () => {
     const text = value.trim();
     if (!text || !chatId || !meId) return;
 
+    // If editing → call edit() instead of send()
+    if (editTarget) {
+      await edit(chatId, editTarget.id, text);
+      clearEdit();
+      setValue("");
+      return;
+    }
+
+    // Normal send (with reply)
     await send({
       chatId,
       type: "TEXT",
@@ -31,17 +44,31 @@ export default function Composer() {
 
     setValue("");
     if (target) clear();
-  }, [value, chatId, meId, target, clear, send]);
+  }, [value, chatId, meId, target, clear, send, editTarget, edit, clearEdit]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       void onSend();
     }
+    if (e.key === "Escape") {
+      if (editTarget) {
+        clearEdit();
+        setValue("");
+        return;
+      }
+    }
   };
+
+   useEffect(() => {
+    if (editTarget) {
+      setValue(editTarget.content ?? "");
+    }
+  }, [editTarget?.id]);
 
   return (
     <div className="px-[1.6rem] py-[1.2rem] bg-zinc-900 border-t border-zinc-800 relative">
+      <EditBanner />
       <ReplyBanner />
       <div className="flex items-center gap-[1.2rem]">
         <div className="flex-1 bg-zinc-800 rounded-[1.2rem] px-[1.6rem] py-[0.9rem] flex items-center gap-[1rem]">

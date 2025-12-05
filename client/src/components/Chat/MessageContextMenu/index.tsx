@@ -10,6 +10,7 @@ type Props = {
   onCopy?: () => void;      
   onPin: () => void;
   onDelete: () => void;
+  onEdit?: () => void; 
 };
 
 export default function MessageContextMenu({
@@ -19,6 +20,7 @@ export default function MessageContextMenu({
   onCopy,
   onPin,
   onDelete,
+  onEdit
 }: Props) {
   const menuRef = useRef<HTMLUListElement>(null);
 
@@ -44,6 +46,14 @@ export default function MessageContextMenu({
         disabled={!onCopy}
         onClick={onCopy ? () => { onCopy(); onClose(); } : undefined}
       />
+
+      {onEdit && (
+        <MenuItem
+          icon="solar:pen-linear"
+          label="Edit"
+          onClick={() => { onEdit(); onClose(); }}
+        />
+      )}
 
       <MenuItem
         icon="solar:pin-linear"
