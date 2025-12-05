@@ -18,22 +18,48 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 401 refresh queue
 let isRefreshing = false;
 let pending: Array<(token: string | null) => void> = [];
+
 const subscribe = (cb: (t: string | null) => void) => pending.push(cb);
-const publish = (t: string | null) => { pending.forEach((cb) => cb(t)); pending = []; };
+const publish = (t: string | null) => {
+  pending.forEach((cb) => cb(t));
+  pending = [];
+};
 
 api.interceptors.response.use(
   (r) => r,
   async (error: AxiosError) => {
     const { refreshToken, refreshTokens, logout } = useAuthStore.getState();
 
-    if (!error.response || error.response.status !== 401) return Promise.reject(error);
-    if (!refreshToken) { logout(); return Promise.reject(error); }
+    if (!error.response) return Promise.reject(error);
 
+    const status = error.response.status;
     const original = error.config as AxiosRequestConfig & { _retry?: boolean };
-    if (original._retry) { logout(); return Promise.reject(error); }
+    const url = original?.url || "";
+
+    // only handle 401/403 as auth errors
+    if (status !== 401 && status !== 403) {
+      return Promise.reject(error);
+    }
+
+    if (
+      url.includes("/auth/login") ||
+      url.includes("/auth/register") ||
+      url.includes("/auth/refresh")
+    ) {
+      return Promise.reject(error);
+    }
+
+    if (!refreshToken) {
+      logout();
+      return Promise.reject(error);
+    }
+
+    if (original._retry) {
+      logout();
+      return Promise.reject(error);
+    }
 
     if (!isRefreshing) {
       isRefreshing = true;
