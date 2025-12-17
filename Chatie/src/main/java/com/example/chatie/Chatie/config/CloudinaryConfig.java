@@ -16,12 +16,10 @@ public class CloudinaryConfig {
                 .ignoreIfMalformed()
                 .load();
 
-        // prefer .env but fall back to OS env vars
         String cloud  = pick(env.get("CLOUDINARY_CLOUD_NAME"), System.getenv("CLOUDINARY_CLOUD_NAME"));
         String key    = pick(env.get("CLOUDINARY_API_KEY"),    System.getenv("CLOUDINARY_API_KEY"));
         String secret = pick(env.get("CLOUDINARY_API_SECRET"), System.getenv("CLOUDINARY_API_SECRET"));
 
-        // quick sanity log (masked)
         System.out.println("[Cloudinary] cloud=" + cloud +
                 " key=" + (key != null && key.length() > 4 ? "***" + key.substring(key.length() - 4) : "null") +
                 " secret?=" + (secret != null));
