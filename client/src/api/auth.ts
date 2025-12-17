@@ -1,6 +1,5 @@
 import { api } from "./client";
 import type { User } from "./users";
-
 export type LoginBody = { identifier: string; password: string };
 export type RegisterBody = {
   email: string;
