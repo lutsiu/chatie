@@ -81,7 +81,7 @@ public class MessageServiceImpl implements MessageService {
                 m.getAttachments().add(
                         MessageAttachment.builder()
                                 .message(m)
-                                .url(a.getUrl())
+                                 .url(a.getUrl())
                                 .mime(a.getMime())
                                 .sizeBytes(a.getSizeBytes())
                                 .width(a.getWidth())

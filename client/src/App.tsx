@@ -5,8 +5,8 @@ import AuthPage from "./pages/AuthPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import Protected from "./components/Protected";
 import { Toaster } from "sonner";
-
 export default function App() {
+
   return (
     <>
       <Routes>
@@ -25,3 +25,4 @@ export default function App() {
     </>
   );
 }
+

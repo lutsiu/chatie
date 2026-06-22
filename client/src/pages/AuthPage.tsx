@@ -92,7 +92,7 @@ export default function AuthPage() {
                 {error}
               </div>
             )}
-
+            
             {mode === "login" ? (
               <form onSubmit={handleLogin} className="grid gap-[1.6rem]">
                 <div>
